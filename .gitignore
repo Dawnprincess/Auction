@@ -71,6 +71,7 @@ Backend/logs/
 # ============ 根目录忽略 ============
 # 根目录的node_modules（如果有）
 node_modules/
+.idea/
 
 # 根目录的构建输出
 dist/
