@@ -1,36 +1,77 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-node_modules
+# ============ 通用忽略规则 ============
 .DS_Store
-dist
-dist-ssr
-coverage
+*.log
+logs/
 *.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-
 *.tsbuildinfo
-
-.eslintcache
-
-# Cypress
-/cypress/videos/
-/cypress/screenshots/
-
-# Vitest
 __screenshots__/
+
+# ============ Frontend (Vue项目) ============
+Frontend/node_modules/
+Frontend/dist/
+Frontend/dist-ssr/
+Frontend/coverage/
+Frontend/npm-debug.log*
+Frontend/yarn-debug.log*
+Frontend/yarn-error.log*
+Frontend/pnpm-debug.log*
+Frontend/lerna-debug.log*
+Frontend/.eslintcache
+
+# Frontend 编辑器文件
+Frontend/.vscode/*
+!Frontend/.vscode/extensions.json
+Frontend/.idea/
+
+# Frontend 测试文件
+Frontend/cypress/videos/
+Frontend/cypress/screenshots/
+
+# ============ Backend (SpringBoot项目) ============
+# 编译输出
+Backend/target/
+Backend/build/
+Backend/out/
+
+# 构建工具
+Backend/.gradle/
+Backend/gradle/
+Backend/.mvn/
+Backend/mvnw
+Backend/mvnw.cmd
+Backend/gradlew
+Backend/gradlew.bat
+
+# 包文件
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# IDE
+Backend/.idea/
+Backend/.settings/
+Backend/.project
+Backend/.classpath
+Backend/*.tmProj
+Backend/.vs/
+Backend/*.iml
+
+# 日志
+Backend/logs/
+
+# ============ 根目录忽略 ============
+# 根目录的node_modules（如果有）
+node_modules/
+
+# 根目录的构建输出
+dist/
+build/
