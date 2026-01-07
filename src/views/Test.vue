@@ -1,6 +1,8 @@
 <!--suppress VueMissingComponentImportInspection -->
 <template>
   <div>
+    <!--添加一个返回的按钮 -->
+    <el-button type="primary" @click="router.back()">返回</el-button>
     <div style="font-size: 20px; font-weight: bold;color: red">
       My first spring project
     </div>
@@ -67,9 +69,13 @@
 
 <script setup>
 import {reactive, ref} from "vue";
+import router from "@/router/index.js";
 
 const a = ref(1);
 const data = reactive({
+  //接收多个路由传参
+  id: router.currentRoute.value.query.id,
+  name1: router.currentRoute.value.query.name,
   a:123,
   b:"hello",
   name: "佩奇",
@@ -87,5 +93,6 @@ const show = (fruits) => {
 const click = () => {
   alert("加功德成功")
 }
-
+console.log('获取的id为' + data.id)
+console.log(data.name)
 </script>

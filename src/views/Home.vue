@@ -1,4 +1,16 @@
 <template>
+  <a href="/test">通过a标签跳转</a> ||
+  <RouterLink to="/test">通过RouterLink跳转</RouterLink>
+
+  <div>
+    <el-button type="primary" @click="router.push('/manager/test')">编程式跳转,push</el-button>
+    <el-button type="primary" @click="router.replace('/manager/test')">编程式跳转,replace</el-button>
+  </div>
+  <!-- 路由传参 -->
+  <div style="margin-bottom: 20px">
+    <el-button type="primary" @click="router.push('/manager/test?id=2&name=Dawn')">路由传参id=2</el-button>
+    <el-button type="primary" @click="router.push({path: '/manager/test', query: {id: 2, name: 'Dawn'}})">路由传参id=2</el-button>
+  </div>
   <div>
 
     <div>
@@ -24,7 +36,7 @@
     <div style="margin-top: 20px">
       <el-radio-group v-model="data.sex">
         <el-radio value="男">男</el-radio>
-      <el-radio label="女">女</el-radio>
+      <el-radio value="女">女</el-radio>
       </el-radio-group>
     </div>{{data.sex}}
   </div>
@@ -91,9 +103,11 @@
 <script setup>
 import {reactive} from "vue"
 import {Edit, Search, Calendar, Delete} from "@element-plus/icons-vue"
+import router from '@/router/index.js';
 
 
 const data = reactive({
+
   input: null,
   description: null,
   value: null,
@@ -126,6 +140,7 @@ const data = reactive({
   dialogVisible: false,
   row :null,
 })
+
 const edit = (row) => {
   data.dialogVisible = true
   data.row = row
