@@ -103,7 +103,8 @@
 <script setup>
 import {reactive} from "vue"
 import {Edit, Search, Calendar, Delete} from "@element-plus/icons-vue"
-import router from '@/router/index.js';
+import router from "@/router/index.js";
+import request from "@/utils/request.js";
 
 
 const data = reactive({
@@ -139,6 +140,11 @@ const data = reactive({
   pageSize4: 8,
   dialogVisible: false,
   row :null,
+  userList :[],
+})
+request.get('/users/selectAll').then(res => {
+  console.log(res)
+  data.userList = res.data
 })
 
 const edit = (row) => {
