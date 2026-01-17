@@ -30,10 +30,10 @@
             <el-icon><User /></el-icon>
             <span>用户管理</span>
           </template>
-          <el-menu-item>管理员信息</el-menu-item>
-          <el-menu-item>用户信息</el-menu-item>
+          <el-menu-item index="/manager/admin">管理员信息</el-menu-item>
+          <el-menu-item index="/manager/user">用户信息</el-menu-item>
         </el-sub-menu>
-        <el-menu-item>
+        <el-menu-item index="/login">
           <el-icon><SwitchButton /></el-icon>
           退出登录
         </el-menu-item>

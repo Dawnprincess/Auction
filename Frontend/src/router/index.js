@@ -4,9 +4,12 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {path: '/', redirect: '/manager/home'},
+    {path: '/login', name: 'Login', meta: { title:'登录'}, component: () => import('../views/Login.vue')},
     {path: '/manager', name: 'Manager', meta: { title:'管理'}, component:() => import('../views/Manager.vue'), children:[
       {path: 'home', name: 'home', meta: { title:'主页'}, component: () => import('../views/Home.vue'),},
       {path: 'data', name: 'data', meta: { title:'数据展示'}, component: () => import('../views/Data.vue')},
+      {path: 'user', name:'user', meta: { title:'用户管理'}, component: () => import('../views/User.vue')},
+      {path: 'admin', name:'admin', meta: { title:'管理员信息'}, component: () => import('../views/Admin.vue')}
       ]},
     {path: '/404', name: 'notFound',meta: { title:'404'}, component: () => import('../views/404.vue')},
     //匹配所有路由

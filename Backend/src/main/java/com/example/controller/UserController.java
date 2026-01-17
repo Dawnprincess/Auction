@@ -36,13 +36,19 @@ public class UserController {
         userService.deleteById(id);
         return Result.success();
     }
+    /*批量删除数据*/
+    @DeleteMapping("/deleteBatch")
+    public Result deleteBatch(@RequestBody List<Integer> ids){
+        userService.deleteBatch(ids);
+        return Result.success();
+    }
     /**
      * 查询所有用户
      */
     //接口路径为/users/selectAll
     @GetMapping("/selectAll")
-    public Result selectAll() {
-        List<User> users = userService.selectAll();
+    public Result selectAll(User user) {
+        List<User> users = userService.selectAll(user);
         return Result.success(users);
     }
 
@@ -68,9 +74,10 @@ public class UserController {
 
     //分页查询
     @GetMapping("/selectPage")
-    public Result selectPage(@RequestParam(defaultValue = "1") Integer pageNum,
+    public Result selectPage(User user,
+                             @RequestParam(defaultValue = "1") Integer pageNum,
                              @RequestParam(defaultValue = "10") Integer pageSize) {
-        PageInfo<User> pageInfo = userService.selectPage(pageNum, pageSize);
+        PageInfo<User> pageInfo = userService.selectPage(pageNum, pageSize, user);
         return Result.success(pageInfo);
     }
 }

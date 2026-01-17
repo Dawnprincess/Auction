@@ -25,8 +25,13 @@ public class UserService {
     public void deleteById(Integer id) {
         userMapper.deleteById(id);
     }
-    public List<User> selectAll() {
-        return userMapper.selectAll();
+    public void deleteBatch(List<Integer> ids) {
+        for (Integer id : ids) {
+            this.deleteById(id);
+        }
+    }
+    public List<User> selectAll(User user) {
+        return userMapper.selectAll(user);
     }
     public User selectById(Integer id){
         return userMapper.selectById(id);
@@ -35,9 +40,9 @@ public class UserService {
         return userMapper.selectList(user);
     }
 
-    public PageInfo<User> selectPage(int pageNum, int pageSize){
+    public PageInfo<User> selectPage(int pageNum, int pageSize, User user){
         PageHelper.startPage(pageNum, pageSize);
-        List<User> list = userMapper.selectAll();
+        List<User> list = userMapper.selectAll(user);
         return PageInfo.of(list);
     }
 }

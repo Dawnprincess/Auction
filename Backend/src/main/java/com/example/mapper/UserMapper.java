@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface UserMapper {
 
-    List<User> selectAll();
+    List<User> selectAll(User user);
 
     User selectById(Integer id);
 
@@ -19,4 +19,5 @@ public interface UserMapper {
     void update(User user);
 
     void deleteById(Integer id);
+
 }
