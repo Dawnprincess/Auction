@@ -42,13 +42,13 @@
       </div>
     </div>
 
-    <el-dialog v-model="data.dialogVisible" title="用户信息" width="500">
-      <el-form :model="data.form" style="padding-right: 70px">
-        <el-form-item label="名字" :label-width=" '100px'">
+    <el-dialog v-model="data.dialogVisible" title="用户信息" width="500" destroy-on-close>
+      <el-form ref="formRef" :rules="data.rules" :model="data.form" style="padding-right: 70px">
+        <el-form-item label="名字" :label-width=" '100px'" prop="name">
           <el-input v-model="data.form.name" autocomplete="off" placeholder="请输入名字"/>
         </el-form-item>
-        <el-form-item label="账号" :label-width=" '100px'">
-          <el-input v-model="data.form.account" autocomplete="off" placeholder="请输入账号"/>
+        <el-form-item label="账号" :label-width=" '100px'" prop="account">
+          <el-input v-model="data.form.account" @input="updateAccessByAccount" autocomplete="off" placeholder="请输入账号"/>
         </el-form-item>
         <el-form-item label="性别" :label-width=" '100px'">
           <el-radio-group v-model="data.form.sex">
@@ -56,10 +56,10 @@
             <el-radio value="女" label="女">女</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="密码" :label-width=" '100px'">
+        <el-form-item label="密码" :label-width=" '100px'" prop="account">
           <el-input v-model="data.form.password" autocomplete="off" placeholder="请输入密码"/>
         </el-form-item>
-        <el-form-item label="权限" :label-width=" '100px'">
+        <el-form-item label="权限" :label-width=" '100px'" prop="access">
           <el-radio-group v-model="data.form.accessId">
             <el-radio :value="0" label="0">管理员</el-radio>
             <el-radio :value="1" label="1">普通用户</el-radio>
@@ -80,7 +80,7 @@
 </template>
 
 <script setup>
-import {reactive} from 'vue';
+import {reactive, ref} from 'vue';
 import request from '../utils/request';
 import {ElMessage, ElMessageBox} from "element-plus";
 import {Delete, Edit} from "@element-plus/icons-vue";
@@ -92,8 +92,31 @@ const data = reactive({
   total: 0,
   dialogVisible: false,
   form: null,
-  ids: []
+  ids: [],
+  rules: {
+    name: [
+      { required: true, message: '请输入名字', trigger: 'blur' },
+      { min: 2, max: 10, message: '名字长度在 2 到 10 个字符', trigger: 'blur' }
+    ],
+    //账号必须以0或1开头,0和1与后面的access权限等级一致,且长度为3
+    account:[
+        { required: true, message: '请输入账号', trigger: 'blur' },
+      { pattern: /^[01]\d{2}$/, message: '账号必须以0或1开头,且长度为3位', trigger: 'blur' }
+    ],
+  }
 })
+
+const formRef = ref(null)
+
+// 监听账号变化，自动设置权限值
+const updateAccessByAccount = (newAccount) => {
+  if(newAccount && newAccount.length > 0) {
+    const firstChar = newAccount.charAt(0);
+    if(firstChar === '0' || firstChar === '1') {
+      data.form.accessId = parseInt(firstChar);
+    }
+  }
+};
 
 const load = () => {
   //selectPage接收参数为?类型
@@ -120,7 +143,14 @@ const handleAdd =() =>{
   data.form = {}
 }
 const save =() =>{
-  data.form.id ? update() : add()
+  formRef.value.validate((valid) => {
+    if (valid) {
+      data.form.id ? update() : add()
+    } else {
+      console.log('保存失败')
+      return false
+    }
+  })
 }
 
 const add =() =>{
@@ -169,7 +199,7 @@ const handleDelete =(id) =>{
 
 const handleSelectionChange = (rows) => { // 多选框选中行
   data.ids = rows.map(row => row.id)
-  console.log(data.ids)
+  //console.log(data.ids)
 }
 
 const delBatch =() =>{
