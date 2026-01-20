@@ -1,6 +1,6 @@
 package com.example.controller;
 
-import com.example.Service.UserService;
+import com.example.service.UserService;
 import com.example.common.Result;
 import com.example.entity.User;
 import com.github.pagehelper.PageInfo;

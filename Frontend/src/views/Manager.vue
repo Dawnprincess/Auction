@@ -8,7 +8,7 @@
     <div style="flex: 1"></div>
     <div style="width:fit-content;display: flex;align-items: center">
       <img src="../assets/user.png" alt="" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 5px">
-      <span style="color: white; font-size: 18px; margin-right: 10px">用户</span>
+      <span style="color: white; font-size: 18px; margin-right: 10px">{{ data.user.name }}</span>
     </div>
   </div>
 
@@ -50,6 +50,12 @@
 
 
 <script setup>
+import {reactive} from "vue";
+
+// 将字符串转换为JSON对象
+const data = reactive({
+  user : JSON.parse(localStorage.getItem('user'))
+})
 
 </script>
 

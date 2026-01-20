@@ -106,7 +106,7 @@ const data = reactive({
   }
 })
 
-const formRef = ref(null)
+const formRef = ref()
 
 // 监听账号变化，自动设置权限值
 const updateAccessByAccount = (newAccount) => {

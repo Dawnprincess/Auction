@@ -11,6 +11,8 @@ const router = createRouter({
       {path: 'user', name:'user', meta: { title:'用户管理'}, component: () => import('../views/User.vue')},
       {path: 'admin', name:'admin', meta: { title:'管理员信息'}, component: () => import('../views/Admin.vue')}
       ]},
+    {path: '/Login', name: 'Login', meta: { title:'登录'}, component: () => import('../views/Login.vue')},
+    {path: '/Register', name: 'Register', meta: { title:'欢迎注册'}, component: () => import('../views/Register.vue')},
     {path: '/404', name: 'notFound',meta: { title:'404'}, component: () => import('../views/404.vue')},
     //匹配所有路由
     {path: '/:pathMatch(.*)*', redirect: '/404'}

@@ -47,6 +47,11 @@
 			<artifactId>mysql-connector-j</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
 
 		<!--分页插件-->
 		<dependency>
@@ -60,6 +65,14 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+
+		<!-- hutool 插件 -->
+		<dependency>
+			<groupId>cn.hutool</groupId>
+			<artifactId>hutool-all</artifactId>
+			<version>5.8.40</version>
+		</dependency>
+
 		<!--
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

@@ -142,10 +142,6 @@ const data = reactive({
   row :null,
   userList :[],
 })
-request.get('/users/selectAll').then(res => {
-  console.log(res)
-  data.userList = res.data
-})
 
 const edit = (row) => {
   data.dialogVisible = true

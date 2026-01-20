@@ -20,4 +20,7 @@ public interface UserMapper {
 
     void deleteById(Integer id);
 
+    @Select("SELECT * FROM user WHERE account = #{account}")
+    User selectByAccount(String account);
+
 }
