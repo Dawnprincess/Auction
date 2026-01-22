@@ -3,11 +3,10 @@ package com.example.entity;
 import lombok.Data;
 
 @Data
-public class User extends Account{
+public class Admin extends Account{
     private Integer id;
     private String name;
     private String account;
-    private String sex;
     private String password;
 
     public Integer getAccessId() {
@@ -43,14 +42,6 @@ public class User extends Account{
 
     public void setAccount(String account) {
         this.account = account;
-    }
-
-    public String getSex() {
-        return sex;
-    }
-
-    public void setSex(String sex) {
-        this.sex = sex;
     }
 
     public String getPassword() {

@@ -10,6 +10,12 @@
           <el-form-item prop="password">
             <el-input size="large" v-model="data.form.password" autocomplete="off" placeholder="请输入密码" prefix-icon="Lock" show-password></el-input>
           </el-form-item>
+          <el-form-item style="width: 100%" size=large>
+            <el-select v-model="data.form.accessId">
+              <el-option :value = "0" label = "管理员"></el-option>
+              <el-option :value = "1" label = "用户"></el-option>
+            </el-select>
+          </el-form-item>
           <div>
             <el-button @click="login" size="large" style="width: 100%" type="primary">登录</el-button>
           </div >
@@ -32,6 +38,7 @@ const data = reactive({
   form: {
     account: '',
     password: '',
+    accessId: 1,
   },
   rules:{
     account: [
@@ -56,7 +63,7 @@ const login = () => {
           localStorage.setItem('user', JSON.stringify(res.data))
           setTimeout(() => {
             location.href = '/manager/home'
-          }, 3000)
+          }, 1000)
 
         } else {
           ElMessage.error(res.msg)

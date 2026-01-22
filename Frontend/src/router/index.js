@@ -3,13 +3,14 @@ import { createRouter, createWebHistory } from 'vue-router'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    {path: '/', redirect: '/manager/home'},
+    {path: '/', redirect: '/login'},
     {path: '/login', name: 'Login', meta: { title:'登录'}, component: () => import('../views/Login.vue')},
     {path: '/manager', name: 'Manager', meta: { title:'管理'}, component:() => import('../views/Manager.vue'), children:[
       {path: 'home', name: 'home', meta: { title:'主页'}, component: () => import('../views/Home.vue'),},
       {path: 'data', name: 'data', meta: { title:'数据展示'}, component: () => import('../views/Data.vue')},
       {path: 'user', name:'user', meta: { title:'用户管理'}, component: () => import('../views/User.vue')},
-      {path: 'admin', name:'admin', meta: { title:'管理员信息'}, component: () => import('../views/Admin.vue')}
+      {path: 'admin', name:'admin', meta: { title:'管理员信息'}, component: () => import('../views/Admin.vue')},
+        {path:'person', name:'person',meta:{ title:'个人中心'}, component: () => import('../views/Person.vue')},
       ]},
     {path: '/Login', name: 'Login', meta: { title:'登录'}, component: () => import('../views/Login.vue')},
     {path: '/Register', name: 'Register', meta: { title:'欢迎注册'}, component: () => import('../views/Register.vue')},

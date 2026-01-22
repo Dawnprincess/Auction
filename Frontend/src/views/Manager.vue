@@ -33,7 +33,11 @@
           <el-menu-item index="/manager/admin">管理员信息</el-menu-item>
           <el-menu-item index="/manager/user">用户信息</el-menu-item>
         </el-sub-menu>
-        <el-menu-item index="/login">
+        <el-menu-item index="/manager/person">
+          <el-icon><User /></el-icon>
+          个人信息
+        </el-menu-item>
+        <el-menu-item index="/login" @click="logout">
           <el-icon><SwitchButton /></el-icon>
           退出登录
         </el-menu-item>
@@ -42,7 +46,7 @@
     </div>
     <!-- 右侧内容 -->
     <div style="flex: 1; width: 0; background-color: #faf7f7; padding: 10px">
-      <RouterView />
+      <RouterView @updateUser = "updateUser" />
     </div>
 
   </div>
@@ -52,10 +56,20 @@
 <script setup>
 import {reactive} from "vue";
 
+const user = JSON.parse(localStorage.getItem('user'))
 // 将字符串转换为JSON对象
 const data = reactive({
   user : JSON.parse(localStorage.getItem('user'))
 })
+
+const logout = () => {
+  localStorage.removeItem('user')
+  router.push('/login')
+}
+
+const updateUser = (user) => {
+  data.user = JSON.parse(localStorage.getItem('user'))
+}
 
 </script>
 

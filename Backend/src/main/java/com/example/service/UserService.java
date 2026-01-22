@@ -1,6 +1,7 @@
 package com.example.service;
 
 import cn.hutool.core.util.StrUtil;
+import com.example.entity.Account;
 import com.example.exception.CustomException;
 import com.example.mapper.UserMapper;
 import com.github.pagehelper.PageHelper;
@@ -63,9 +64,9 @@ public class UserService {
         return PageInfo.of(list);
     }
 
-    public User login(User user) {
-        String account = user.getAccount();
-        String password = user.getPassword();
+    public Account login(Account act) {
+        String account = act.getAccount();
+        String password = act.getPassword();
 
         User dbUser = userMapper.selectByAccount(account);
         if (dbUser == null){

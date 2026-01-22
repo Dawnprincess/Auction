@@ -56,7 +56,7 @@
             <el-radio value="女" label="女">女</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="密码" :label-width=" '100px'" prop="account">
+        <el-form-item label="密码" :label-width=" '100px'" prop="password">
           <el-input v-model="data.form.password" autocomplete="off" placeholder="请输入密码"/>
         </el-form-item>
         <el-form-item label="权限" :label-width=" '100px'" prop="access">
