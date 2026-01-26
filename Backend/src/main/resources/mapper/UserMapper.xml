@@ -51,11 +51,11 @@
     </select>
 
     <insert id="insert" parameterType="com.example.entity.User">
-        insert into user (id, name, account, sex, password, access_id) values (#{id}, #{name}, #{account}, #{sex}, #{password}, #{accessId})
+        insert into user (id, name, account, sex, password, access_id, avatar) values (#{id}, #{name}, #{account}, #{sex}, #{password}, #{accessId}, #{avatar})
     </insert>
 
     <update id="update" parameterType="com.example.entity.User">
-        update user set account = #{account}, name = #{name}, sex = #{sex}, password = #{password}, access_id = #{accessId} where id = #{id}
+        update user set account = #{account}, name = #{name}, sex = #{sex}, password = #{password}, access_id = #{accessId}, avatar = #{avatar} where id = #{id}
     </update>
 
     <delete id="deleteById" parameterType="int">

@@ -13,11 +13,13 @@ const request = axios.create({
 //request拦截器
 //可以子请求发送前对请求做一些处理
 request.interceptors.request.use(config => {
-    //设置统一的数据传输格式为json,编码规则为utf-8
-    config.headers['Content-Type'] = 'application/json;charset=utf-8';
-    return config
-},error=>{
-    return Promise.reject(error)
+        // 如果是 FormData 数据，则不设置 Content-Type，让浏览器自动设置
+        if (!(config.data instanceof FormData)) {
+            config.headers['Content-Type'] = 'application/json;charset=utf-8';
+        }
+        return config
+    }, error => {
+        return Promise.reject(error)
     });
 
 //response拦截器

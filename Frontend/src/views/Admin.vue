@@ -16,6 +16,11 @@
         <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="序列"></el-table-column>
         <el-table-column prop="name" label="名字"></el-table-column>
+        <el-table-column prop="avatar" label="avatar">
+          <template #default="scope">
+            <img :src="scope.row.avatar || defaultAvatar" alt="avatar" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover;">
+          </template>
+        </el-table-column>
         <el-table-column prop="account" label="账号"></el-table-column>
         <el-table-column prop="password" label="密码"></el-table-column>
         <el-table-column>
@@ -47,6 +52,18 @@
         </el-form-item>
         <el-form-item label="账号" :label-width=" '100px'" prop="account">
           <el-input v-model="data.form.account" @input="updateAccessByAccount" autocomplete="off" placeholder="请输入账号"/>
+        </el-form-item>
+        <el-form-item label="头像" :label-width=" '100px'">
+          <el-upload
+              action="http://localhost:8080/files/upload"
+              list_type="picture"
+              :auto-upload="false"
+              :on-change="handleAvatarChange"
+              :limit="1"
+              :accept="'image/*'"
+          >
+            <el-button type="primary">上传头像</el-button>
+          </el-upload>
         </el-form-item>
         <el-form-item label="密码" :label-width=" '100px'" prop="account">
           <el-input v-model="data.form.password" autocomplete="off" placeholder="请输入密码"/>
@@ -91,7 +108,17 @@ const data = reactive({
     ],
   }
 })
-
+const defaultAvatar = new URL('@/assets/user.png', import.meta.url).href
+const handleAvatarChange = (file) => {
+  //先判断图片大小,不能超过1MB
+  if (file.size / 1024 > 1024) {
+    ElMessage.error('图片大小不能超过1MB')
+    return
+  }
+  const previewURL = URL.createObjectURL(file.raw)
+  data.form.avatar = previewURL
+  data.pendingAvatarFile = file.raw
+}
 const formRef = ref()
 
 // 监听账号变化，自动设置权限值
@@ -140,6 +167,32 @@ const save =() =>{
 }
 
 const add =() =>{
+  // 如果有新的头像文件需要上传
+  if(data.pendingAvatarFile) {
+    // 先上传文件
+    const formData = new FormData();
+    formData.append('file', data.pendingAvatarFile);
+
+    request.post('/files/upload', formData).then(uploadRes => {
+      if(uploadRes.code === '200') {
+        // 获取上传后的URL
+        data.form.avatar = uploadRes.data;
+        // 在这里执行用户信息更新，确保在文件上传成功之后
+        addUser()
+      } else {
+        ElMessage.error('头像上传失败');
+      }
+    }).catch(error => {
+      ElMessage.error('头像上传失败');
+      console.error(error);
+    });
+  } else {
+    // 没有新头像，直接更新用户信息
+    addUser()
+  }
+}
+
+const addUser =() =>{
   request.post('/admin/add',data.form).then(res => {
     if(res.code === '200'){
       data.dialogVisible = false
@@ -153,6 +206,32 @@ const add =() =>{
 }
 
 const update =() =>{
+  // 如果有新的头像文件需要上传
+  if(data.pendingAvatarFile) {
+    // 先上传文件
+    const formData = new FormData();
+    formData.append('file', data.pendingAvatarFile);
+
+    request.post('/files/upload', formData).then(uploadRes => {
+      if(uploadRes.code === '200') {
+        // 获取上传后的URL
+        data.form.avatar = uploadRes.data;
+        // 在这里执行用户信息更新，确保在文件上传成功之后
+        updateUser()
+      } else {
+        ElMessage.error('头像上传失败');
+      }
+    }).catch(error => {
+      ElMessage.error('头像上传失败');
+      console.error(error);
+    });
+  } else {
+    // 没有新头像，直接更新用户信息
+    updateUser()
+  }
+}
+
+const updateUser =() => {
   request.put('/admin/update',data.form).then(res => {
     if(res.code === '200'){
       data.dialogVisible = false

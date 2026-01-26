@@ -7,7 +7,7 @@
     </div>
     <div style="flex: 1"></div>
     <div style="width:fit-content;display: flex;align-items: center">
-      <img src="../assets/user.png" alt="" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 5px">
+      <img :src = "data.user.avatar || defaultAvatar" alt="" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 5px;object-fit: cover">
       <span style="color: white; font-size: 18px; margin-right: 10px">{{ data.user.name }}</span>
     </div>
   </div>
@@ -58,6 +58,7 @@ import {reactive} from "vue";
 
 const user = JSON.parse(localStorage.getItem('user'))
 // 将字符串转换为JSON对象
+const defaultAvatar = new URL('@/assets/user.png', import.meta.url).href
 const data = reactive({
   user : JSON.parse(localStorage.getItem('user'))
 })
