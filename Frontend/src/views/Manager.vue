@@ -36,6 +36,10 @@
             <el-menu-item index="/manager/admin">管理员信息</el-menu-item>
             <el-menu-item index="/manager/user">用户信息</el-menu-item>
           </el-sub-menu>
+          <el-menu-item index="/manager/goodsManage">
+            <el-icon><Goods /></el-icon>
+            商品管理
+          </el-menu-item>
         </template>
 
         <el-menu-item index="/manager/person">
@@ -61,6 +65,7 @@
 <script setup>
 import {reactive} from "vue";
 import router from "@/router/index.js";
+import {Goods} from "@element-plus/icons-vue";
 
 const user = JSON.parse(localStorage.getItem('user'))
 // 将字符串转换为JSON对象

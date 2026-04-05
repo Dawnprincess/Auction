@@ -10,6 +10,8 @@ const router = createRouter({
       {path: 'data', name: 'data', meta: { title:'数据展示'}, component: () => import('../views/Data.vue')},
       {path: 'user', name:'user', meta: { title:'用户管理'}, component: () => import('../views/User.vue')},
       {path: 'admin', name:'admin', meta: { title:'管理员信息'}, component: () => import('../views/Admin.vue')},
+        {path:'goods', name:'goods',meta:{ title:'商品管理'}, component: () => import('../views/Goods.vue')},
+        {path: 'goodsManage', name:'goodsManage', meta: { title:'商品管理'}, component: () => import('../views/GoodsManage.vue')},
         {path:'person', name:'person',meta:{ title:'个人中心'}, component: () => import('../views/Person.vue')},
       ]},
     {path: '/Login', name: 'Login', meta: { title:'登录'}, component: () => import('../views/Login.vue')},
