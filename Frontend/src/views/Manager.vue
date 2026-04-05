@@ -21,18 +21,23 @@
           <el-icon><House /></el-icon>
           系统首页
         </el-menu-item>
-        <el-menu-item index="/manager/data">
-          <el-icon><DataAnalysis /></el-icon>
-          数据统计
-        </el-menu-item>
-        <el-sub-menu index="1">
-          <template #title>
-            <el-icon><User /></el-icon>
-            <span>用户管理</span>
-          </template>
-          <el-menu-item index="/manager/admin">管理员信息</el-menu-item>
-          <el-menu-item index="/manager/user">用户信息</el-menu-item>
-        </el-sub-menu>
+
+        <!-- 管理员专属菜单 -->
+        <template v-if="data.user.accessId === 0">
+          <el-menu-item index="/manager/data">
+            <el-icon><DataAnalysis /></el-icon>
+            数据统计
+          </el-menu-item>
+          <el-sub-menu index="1">
+            <template #title>
+              <el-icon><User /></el-icon>
+              <span>用户管理</span>
+            </template>
+            <el-menu-item index="/manager/admin">管理员信息</el-menu-item>
+            <el-menu-item index="/manager/user">用户信息</el-menu-item>
+          </el-sub-menu>
+        </template>
+
         <el-menu-item index="/manager/person">
           <el-icon><User /></el-icon>
           个人信息
@@ -55,6 +60,7 @@
 
 <script setup>
 import {reactive} from "vue";
+import router from "@/router/index.js";
 
 const user = JSON.parse(localStorage.getItem('user'))
 // 将字符串转换为JSON对象

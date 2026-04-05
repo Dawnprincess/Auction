@@ -35,8 +35,6 @@ public class UserService {
         if(StrUtil.isBlank(user.getName()))
             user.setName("用户" + user.getAccount());
         //没设置权限，默认为普通用户
-        if(user.getAccessId() == null)
-            user.setAccessId(1);
         userMapper.insert(user);
     }
     public void update(User user) {
@@ -111,6 +109,8 @@ public class UserService {
     }
 
     public void register(User user) {
+        //前端只能注册普通用户
+        user.setAccessId(1);
         this.add(user);
     }
 }

@@ -45,11 +45,13 @@ const validatePass = (rules, value, callback) => {
 }
 
 const data = reactive({
-  form: {},
+  form: {
+    accessId: 1,
+  },
   rules:{
     account: [
       { required: true, message: '请输入账号', trigger: 'blur' },
-      { pattern: /^[01]\d{2}$/, message: '账号必须以0或1开头,且长度为3位', trigger: ['blur', 'submit'] }
+      { pattern: /^1\d{2}$/, message: '账号必须以1开头,且长度为3位', trigger: ['blur', 'submit'] }
     ],
     //名称不能超过10个字符
     name:[

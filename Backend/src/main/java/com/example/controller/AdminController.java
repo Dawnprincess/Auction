@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.common.RequireAdmin;
 import com.example.common.Result;
 import com.example.entity.Admin;
 import com.example.service.AdminService;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@RequireAdmin
 //通过注解@RequestMapping来指定访问路径
 @RequestMapping("/admin")
 public class AdminController {
