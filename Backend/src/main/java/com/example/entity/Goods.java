@@ -14,7 +14,7 @@ public class Goods {
     private BigDecimal reservePrice;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private Integer userId;
+    private String userAccount;
     private Integer status; // 0-待审核, 1-拍卖中, 2-已成交, 3-流拍
     private String imageUrl;
     private LocalDateTime createTime;
@@ -43,12 +43,12 @@ public class Goods {
         this.imageUrl = imageUrl;
     }
 
-    public Integer getUserId() {
-        return userId;
+    public String getUserAccount() {
+        return userAccount;
     }
 
-    public void setUserId(Integer userId) {
-        this.userId = userId;
+    public void setUserAccount(String userAccount) {
+        this.userAccount = userAccount;
     }
 
     public LocalDateTime getStartTime() {

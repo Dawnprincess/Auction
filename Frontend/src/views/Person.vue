@@ -160,6 +160,7 @@ const updateUser =() => {
     // 先上传文件
     const formData = new FormData();
     formData.append('file', data.pendingAvatarFile);
+    formData.append('type', 'avatar');
 
     request.post('/files/upload', formData).then(uploadRes => {
       if(uploadRes.code === '200') {

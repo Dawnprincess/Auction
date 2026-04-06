@@ -49,7 +49,7 @@ public class AdminService {
                 admin.getAvatar() != null && !oldUser.getAvatar().equals(admin.getAvatar())) {
             String oldFileName = fileService.extractFileNameFromUrl(oldUser.getAvatar());
             if (oldFileName != null) {
-                String filePath = System.getProperty("user.dir") + "/files/" + oldFileName;
+                String filePath = System.getProperty("user.dir") + "/files/avatar/" + oldFileName;
                 FileUtil.del(filePath);
             }
         }
@@ -66,7 +66,7 @@ public class AdminService {
                 String fileName = fileService.extractFileNameFromUrl(admin.getAvatar());
                 // 如果有头像，删除头像文件
                 if (fileName != null) {
-                    String filePath = System.getProperty("user.dir") + "/files/" + fileName;
+                    String filePath = System.getProperty("user.dir") + "/files/avatar" + fileName;
                     FileUtil.del(filePath);
                 }
             }

@@ -1,8 +1,10 @@
 package com.example.service;
 
 import com.example.entity.Goods;
+import com.example.entity.User;
 import com.example.exception.CustomException;
 import com.example.mapper.GoodsMapper;
+import com.example.mapper.UserMapper;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import jakarta.annotation.Resource;
@@ -16,6 +18,9 @@ public class GoodsService {
 
     @Resource
     private GoodsMapper goodsMapper;
+    
+    @Resource
+    private UserMapper userMapper;
 
     /**
      * 新增商品（包含数据校验）
@@ -45,7 +50,15 @@ public class GoodsService {
             }
         }
 
-        // 4. 设置默认值
+        if (goods.getUserAccount() == null || goods.getUserAccount().isEmpty()) {
+            throw new CustomException("500", "拍卖人账号不能为空");
+        }
+        
+        User user = userMapper.selectByAccount(goods.getUserAccount());
+        if (user == null) {
+            throw new CustomException("500", "拍卖人账号不存在");
+        }
+
         if (goods.getCurrentPrice() == null) {
             goods.setCurrentPrice(goods.getStartPrice()); // 初始当前价等于起拍价
         }
@@ -66,6 +79,14 @@ public class GoodsService {
                 throw new CustomException("500", "拍卖结束时间必须晚于开始时间");
             }
         }
+        
+        if (goods.getUserAccount() != null && !goods.getUserAccount().isEmpty()) {
+            User user = userMapper.selectByAccount(goods.getUserAccount());
+            if (user == null) {
+                throw new CustomException("500", "拍卖人账号不存在");
+            }
+        }
+        
         goodsMapper.update(goods);
     }
 

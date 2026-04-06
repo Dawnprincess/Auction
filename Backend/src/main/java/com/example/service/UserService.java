@@ -45,7 +45,7 @@ public class UserService {
                 user.getAvatar() != null && !oldUser.getAvatar().equals(user.getAvatar())) {
             String oldFileName = fileService.extractFileNameFromUrl(oldUser.getAvatar());
             if (oldFileName != null) {
-                String filePath = System.getProperty("user.dir") + "/files/" + oldFileName;
+                String filePath = System.getProperty("user.dir") + "/files/avatar/" + oldFileName;
                 FileUtil.del(filePath);
             }
         }
@@ -62,7 +62,7 @@ public class UserService {
                 String fileName = fileService.extractFileNameFromUrl(user.getAvatar());
                 // 如果有头像，删除头像文件
                 if (fileName != null) {
-                    String filePath = System.getProperty("user.dir") + "/files/" + fileName;
+                    String filePath = System.getProperty("user.dir") + "/files/avatar/" + fileName;
                     FileUtil.del(filePath);
                 }
             }

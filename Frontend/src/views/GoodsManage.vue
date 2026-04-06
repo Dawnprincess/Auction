@@ -1,6 +1,5 @@
 <template>
   <div style="padding: 20px">
-    <!-- 搜索栏 -->
     <div style="margin-bottom: 20px; display: flex; gap: 10px">
       <el-input v-model="searchName" placeholder="搜索商品名称" style="width: 200px"></el-input>
       <el-select v-model="searchStatus" placeholder="选择状态" style="width: 150px" clearable>
@@ -13,7 +12,6 @@
       <el-button type="success" @click="openAddDialog">新增商品</el-button>
     </div>
 
-    <!-- 商品表格 -->
     <el-table :data="tableData" border stripe>
       <el-table-column prop="id" label="ID" width="80"></el-table-column>
       <el-table-column prop="name" label="商品名称"></el-table-column>
@@ -31,7 +29,6 @@
       <el-table-column prop="endTime" label="结束时间" width="180"></el-table-column>
       <el-table-column label="操作" width="250" fixed="right">
         <template #default="scope">
-          <!-- 审核按钮：只有待审核时显示 -->
           <el-button v-if="scope.row.status === 0" size="small" type="success" @click="handleCheck(scope.row, 1)">通过</el-button>
           <el-button v-if="scope.row.status === 0" size="small" type="danger" @click="handleCheck(scope.row, 3)">驳回</el-button>
 
@@ -41,7 +38,6 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页 -->
     <div style="margin-top: 20px; display: flex; justify-content: flex-end">
       <el-pagination
         v-model:current-page="pageNum"
@@ -52,18 +48,45 @@
       />
     </div>
 
-    <!-- 新增/编辑弹窗 (复用之前的逻辑) -->
     <el-dialog v-model="dialogVisible" title="商品信息" width="500px">
-      <el-form :model="form" label-width="100px">
-        <el-form-item label="商品名称"><el-input v-model="form.name"></el-input></el-form-item>
-        <el-form-item label="起拍价"><el-input-number v-model="form.startPrice"></el-input-number></el-form-item>
-        <el-form-item label="保留价"><el-input-number v-model="form.reservePrice"></el-input-number></el-form-item>
+      <el-form ref="formRef" :rules="data.rules" :model="data.form" label-width="100px">
+        <el-form-item label="商品名称"><el-input v-model="data.form.name"></el-input></el-form-item>
+        <el-form-item label="商品介绍"><el-input v-model="data.form.intro" type="textarea"></el-input></el-form-item>
+
+        <el-form-item label="起拍价"><el-input-number v-model="data.form.startPrice"></el-input-number></el-form-item>
+        <el-form-item label="保留价"><el-input-number v-model="data.form.reservePrice"></el-input-number></el-form-item>
         <el-form-item label="开始时间">
-          <el-date-picker v-model="form.startTime" type="datetime" placeholder="选择开始时间" />
+          <el-date-picker v-model="data.form.startTime" type="datetime" placeholder="选择开始时间" />
         </el-form-item>
         <el-form-item label="结束时间">
-          <el-date-picker v-model="form.endTime" type="datetime" placeholder="选择结束时间" />
+          <el-date-picker v-model="data.form.endTime" type="datetime" placeholder="选择结束时间" />
         </el-form-item>
+
+        <el-form-item label="拍卖人账号" prop="userAccount">
+          <el-input v-model="data.form.userAccount" placeholder="必填"></el-input>
+        </el-form-item>
+
+        <el-form-item label="商品状态">
+          <el-select v-model="data.form.status" placeholder="请选择状态">
+            <el-option label="待审核" :value="0"></el-option>
+            <el-option label="拍卖中" :value="1"></el-option>
+            <el-option label="已成交" :value="2"></el-option>
+            <el-option label="流拍" :value="3"></el-option>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="商品图片" :label-width="'100px'">
+          <el-upload
+              class="goods-uploader"
+              :show-file-list="false"
+              :auto-upload="false"
+              :on-change="handleImageChange"
+          >
+            <img v-if="data.form.imageUrl" :src="data.form.imageUrl" class="goods" />
+            <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+          </el-upload>
+        </el-form-item>
+
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -77,6 +100,7 @@
 import { ref, reactive } from "vue";
 import request from "@/utils/request.js";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { Plus } from "@element-plus/icons-vue";
 
 const tableData = ref([]);
 const searchName = ref("");
@@ -85,7 +109,30 @@ const pageNum = ref(1);
 const pageSize = ref(10);
 const total = ref(0);
 const dialogVisible = ref(false);
-const form = reactive({});
+
+const formRef = ref()
+
+const data = reactive({
+  form: {
+    status: 0,
+  },
+  pendingImageFile: null,
+  rules:{
+    userAccount: [
+      { required: true, message: '请填写用户ID', trigger: 'blur' }
+    ],
+  }
+});
+
+const handleImageChange = (file) => {
+  if (file.size / 1024 > 1024) {
+    ElMessage.error('图片大小不能超过1MB')
+    return
+  }
+  const previewURL = URL.createObjectURL(file.raw)
+  data.form.imageUrl = previewURL
+  data.pendingImageFile = file.raw
+}
 
 const loadData = () => {
   request.get("/goods/selectPage", {
@@ -98,7 +145,6 @@ const loadData = () => {
   });
 };
 
-// 审核操作
 const handleCheck = (row, status) => {
   const msg = status === 1 ? "确认通过审核吗？" : "确认驳回该商品吗？";
   ElMessageBox.confirm(msg, "提示").then(() => {
@@ -124,30 +170,53 @@ const handleDelete = (id) => {
 };
 
 const openAddDialog = () => {
-  Object.assign(form, { startPrice: 0, reservePrice: 0 });
+  data.form = {status: 0};
+  data.pendingImageFile = null;
   dialogVisible.value = true;
 };
 
-// ... existing code ...
 const save = () => {
-  // 1. 前端时间校验
-  if (form.startTime && form.endTime) {
-    const start = new Date(form.startTime);
-    const end = new Date(form.endTime);
+  if (data.form.startTime && data.form.endTime) {
+    const start = new Date(data.form.startTime);
+    const end = new Date(data.form.endTime);
     if (end <= start) {
       ElMessage.error("结束时间必须晚于开始时间");
-      return; // 阻止发送请求
+      return;
     }
   }
 
-  // 2. 根据是否有 id 决定请求方式
-  let requestPromise;
-  if (form.id) {
-    // 编辑：使用 PUT 请求
-    requestPromise = request.put("/goods/update", form);
+  if(!data.form.userAccount){
+    ElMessage.error("必须指定拍卖人账号");
+    return;
+  }
+
+  if(data.pendingImageFile) {
+    const formData = new FormData();
+    formData.append('file', data.pendingImageFile);
+    formData.append('type', 'goods');
+
+    request.post('/files/upload', formData).then(uploadRes => {
+      if(uploadRes.code === '200') {
+        data.form.imageUrl = uploadRes.data;
+        performGoodsUpdate();
+      } else {
+        ElMessage.error('图片上传失败');
+      }
+    }).catch(error => {
+      ElMessage.error('图片上传失败');
+      console.error(error);
+    });
   } else {
-    // 新增：使用 POST 请求
-    requestPromise = request.post("/goods/add", form);
+    performGoodsUpdate();
+  }
+}
+
+const performGoodsUpdate = () => {
+  let requestPromise;
+  if (data.form.id) {
+    requestPromise = request.put("/goods/update", data.form);
+  } else {
+    requestPromise = request.post("/goods/add", data.form);
   }
 
   requestPromise.then(res => {
@@ -164,11 +233,38 @@ const save = () => {
   });
 };
 
-
 const handleEdit = (row) => {
-  Object.assign(form, row);
+  data.form = { ...row };
+  data.pendingImageFile = null;
   dialogVisible.value = true;
 };
 
 loadData();
 </script>
+
+<style scoped>
+.goods-uploader .goods {
+  width: 178px;
+  height: 178px;
+  display: block;
+  object-fit: cover;
+}
+.goods-uploader .el-upload {
+  border: 1px dashed var(--el-border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: var(--el-transition-duration-fast);
+}
+.goods-uploader .el-upload:hover {
+  border-color: var(--el-color-primary);
+}
+.el-icon.goods-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 178px;
+  height: 178px;
+  text-align: center;
+}
+</style>
