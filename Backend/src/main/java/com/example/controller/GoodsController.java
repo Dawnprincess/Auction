@@ -1,12 +1,13 @@
 package com.example.controller;
 
-import com.example.common.RequireAdmin;
 import com.example.common.Result;
 import com.example.entity.Goods;
 import com.example.service.GoodsService;
 import com.github.pagehelper.PageInfo;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -62,4 +63,25 @@ public class GoodsController {
     public Result detail(@PathVariable Integer id) {
         return Result.success(goodsService.selectById(id));
     }
+
+    /*
+     * 获取商品列表(首页展示)
+     */
+    @GetMapping("/list")
+    public Result list(Goods goods) {
+        // 默认只查询 status = 1 (拍卖中) 的商品
+        if (goods.getStatus() == null) {
+            goods.setStatus(1);
+        }
+        List<Goods> list = goodsService.selectAll(goods);
+        return Result.success(list);
+    }
+
+    /*
+     * 获取个人商品列表
+     */
+    @GetMapping("/myList")
+    public Result myList(Goods goods) {
+        List<Goods> list = goodsService.selectByUserAccount(goods);
+        return Result.success(list);}
 }

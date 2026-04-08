@@ -1,153 +1,179 @@
 <template>
-  <a href="/test">通过a标签跳转</a> ||
-  <RouterLink to="/test">通过RouterLink跳转</RouterLink>
+  <div style="padding: 20px; background-color: #f5f7fa; min-height: 100vh;">
 
-  <div>
-    <el-button type="primary" @click="router.push('/manager/test')">编程式跳转,push</el-button>
-    <el-button type="primary" @click="router.replace('/manager/test')">编程式跳转,replace</el-button>
-  </div>
-  <!-- 路由传参 -->
-  <div style="margin-bottom: 20px">
-    <el-button type="primary" @click="router.push('/manager/test?id=2&name=Dawn')">路由传参id=2</el-button>
-    <el-button type="primary" @click="router.push({path: '/manager/test', query: {id: 2, name: 'Dawn'}})">路由传参id=2</el-button>
-  </div>
-  <div>
+    <!-- 1. 顶部走马灯 (Banner) -->
+    <!-- 修改点：增加 margin: 0 auto 实现居中，设置 max-width 限制最大宽度 -->
+    <el-carousel
+      height="300px"
+      style="margin: 0 auto 30px auto; border-radius: 10px; overflow: hidden; background-color: #f0f0f0; max-width: 650px;"
+    >
+      <el-carousel-item v-for="item in banners" :key="item.id">
+        <img :src="item.url" style="width: 100%; height: 100%; object-fit: contain;" />
+      </el-carousel-item>
+    </el-carousel>
 
-    <div>
-      <el-input v-model="data.input" style="width: 240px" placeholder="请输入内容" :prefix-icon="Search" /> {{ data.input }}
-      <el-input
-          style="width: 240px"
-          type = "textarea"
-          v-model="data.description"
-          class="responsive-input"
-          placeholder="当输入的字数太多显示不全，设置textarea来改为多行下拉方式当输入的字数太多显示不全，设置textarea来改为多行下拉方式"
-          :suffix-icon="Calendar"
-      />
-    </div>
-    <el-select clearable multiple v-model="data.value" placeholder="选择喜爱的水果" style="width: 240px">
-      <el-option
-          v-for="item in data.options"
-          :key="item.id"
-          :label="item.label"
-          :value="item.name"
-      />
-    </el-select> {{data.value}}
+    <!-- 主体内容区：左侧商品 + 右侧侧边栏 -->
+    <div style="display: flex; gap: 20px;">
 
-    <div style="margin-top: 20px">
-      <el-radio-group v-model="data.sex">
-        <el-radio value="男">男</el-radio>
-      <el-radio value="女">女</el-radio>
-      </el-radio-group>
-    </div>{{data.sex}}
-  </div>
+      <!-- 2. 左侧：商品展示卡片 (Grid布局) -->
+      <div style="flex: 1;">
+        <!-- 修改点：使用 flex 布局让标题和按钮在同一行两端对齐 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2 style="color: #333; margin: 0;">🔥 正在热拍</h2>
 
-  <el-radio-group v-model="data.tag">
-    <el-radio :value="3">Option A</el-radio>
-    <el-radio :value="6">Option B</el-radio>
-    <el-radio :value="9">Option C</el-radio>
-  </el-radio-group>
-
-  <div style="margin-top: 20px" class="block">
-    <span class="demonstration">Default</span>
-    <el-date-picker
-        v-model="data.date"
-        type="datetime"
-        placeholder="选择日期和时间"
-        format="YYYY/MM/DD HH:mm:ss"
-        value-format="YYYY/MM/DD HH:mm:ss"
-    />
-    {{data.date}}
-  </div>
-
-  <div>
-    <el-table :data="data.tableData" style="width: 100%">
-      <el-table-column prop="date" label="Date" width="180" />
-      <el-table-column prop="name" label="Name" width="180" />
-      <el-table-column prop="address" label="Address" />
-      <el-table-column label="操作" />
-      <el-table-column>
-        <template #default="scope">
-          <el-button type="primary" circle @click=edit(scope.row)>
-            <el-icon><Edit /></el-icon>
+          <!-- 仅普通用户可见的发布按钮 -->
+          <el-button
+            v-if="user && user.accessId === 1"
+            type="warning"
+            size="large"
+            @click="handlePublish"
+          >
+            <el-icon style="margin-right: 5px"><Plus /></el-icon> 发布我的拍卖品
           </el-button>
+        </div>
 
-          <el-button type="danger" circle @click=del(scope.row.id)>
-            <el-icon><Delete /></el-icon>
-          </el-button>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;">
+          <el-card
+            v-for="goods in auctionList"
+            :key="goods.id"
+            shadow="hover"
+            class="goods-card"
+            @click="handleDetail(goods.id)"
+          >
+            <img :src="goods.imageUrl" class="card-img" />
+            <div style="padding: 10px 0;">
+              <div class="goods-name">{{ goods.name }}</div>
+              <div style="display: flex; justify-content: space-between; margin-top: 10px; color: #666; font-size: 14px;">
+                <span>当前价:</span>
+                <span style="color: #f56c6c; font-weight: bold; font-size: 16px;">¥{{ goods.currentPrice }}</span>
+              </div>
+              <div style="margin-top: 5px; font-size: 12px; color: #999;">
+                截止: {{ formatTime(goods.endTime) }}
+              </div>
+            </div>
+          </el-card>
+        </div>
+      </div>
 
-        </template>
-      </el-table-column>
-    </el-table>
-    <div style="padding : 10px 0">
-      <el-pagination
-          v-model:current-page="data.currentPage4"
-          v-model:page-size="data.pageSize4"
-          :page-sizes="[5,10,15,20]"
-          background
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="data.tableData.length"
-      />
+      <!-- 3. 右侧：即将开始 (Sidebar) -->
+      <div style="width: 280px; flex-shrink: 0;">
+        <el-card shadow="never">
+          <template #header>
+            <div style="font-weight: bold;">⏰ 即将开拍</div>
+          </template>
+          <div v-for="item in upcomingList" :key="item.id" class="upcoming-item">
+            <img :src="item.imageUrl" class="small-img" />
+            <div class="upcoming-info">
+              <div class="small-name">{{ item.name }}</div>
+              <div style="font-size: 12px; color: #e6a23c;">{{ formatTime(item.startTime) }} 开始</div>
+            </div>
+          </div>
+          <el-empty v-if="upcomingList.length === 0" description="暂无即将开拍商品" :image-size="60" />
+        </el-card>
+      </div>
+
     </div>
   </div>
-
-  <el-dialog v-model="data.dialogVisible" title="编辑行对象" width="800">
-    <div style="padding:20px">
-      <div style="margin-bottom: 20px">日期:{{data.row.date}}</div>
-      <div style="margin-bottom: 20px">名称:{{data.row.name}}</div>
-      <div style="margin-bottom: 20px">地址:{{data.row.address}}</div>
-    </div>
-  </el-dialog>
-
 </template>
 
 <script setup>
-import {reactive} from "vue"
-import {Edit, Search, Calendar, Delete} from "@element-plus/icons-vue"
-import router from "@/router/index.js";
+import { ref, onMounted } from "vue";
 import request from "@/utils/request.js";
+import { ElMessage } from "element-plus";
+import { Plus } from '@element-plus/icons-vue';
+import router from "@/router/index.js"; // 记得引入图标
 
+// 获取当前登录用户信息
+const user = ref(JSON.parse(localStorage.getItem('user')));
 
-const data = reactive({
+const auctionList = ref([]); // 正在拍卖
+const upcomingList = ref([]); // 即将开始
+const banners = ref([
+  { id: 1, url: new URL('@/assets/carousel1.jpg', import.meta.url).href },
+  { id: 2, url: new URL('@/assets/carousel2.jpg', import.meta.url).href },
+  { id: 3, url: new URL('@/assets/carousel3.jpg', import.meta.url).href }
+]);
 
-  input: null,
-  description: null,
-  value: null,
-  options: [
-    {id: 1, label: 'apple', name: 'apple'}, {id: 2, label: 'banana', name: 'banana'}, {
-      id: 3,
-      label: 'orange',
-      name: 'orange'
-    }, {id: 4, label: 'apple', name: 'apple1'}
-  ],
-  sex: '男',
-  tag: 3,
-  date: '',
-  tableData: [
-    {id: 1,date: '2022-01-01', name: 'John', address: 'New York No. 1 Lake Park'},
-    {id: 2,date: '2022-01-02', name: 'Tom', address: 'London No. 1 Lake Park'},
-    {id: 3,date: '2022-01-03', name: 'Jony', address: 'Sydney No. 1 Lake Park',},
-    {id: 4,date: '2022-01-01', name: 'John', address: 'New York No. 1 Lake Park'},
-    {id: 5,date: '2022-01-02', name: 'Tom', address: 'London No. 1 Lake Park'},
-    {id: 6,date: '2022-01-03', name: 'Jony', address: 'Sydney No. 1 Lake Park',},
-    {id: 7,date: '2022-01-01', name: 'John', address: 'New York No. 1 Lake Park'},
-    {id: 8,date: '2022-01-01', name: 'John', address: 'New York No. 1 Lake Park'},
-    {id: 9,date: '2022-01-02', name: 'Tom', address: 'London No. 1 Lake Park'},
-    {id: 10,date: '2022-01-03', name: 'Jony', address: 'Sydney No. 1 Lake Park',},
-    {id: 11,date: '2022-01-02', name: 'Tom', address: 'London No. 1 Lake Park'},
-    {id: 12,date: '2022-01-03', name: 'Jony', address: 'Sydney No. 1 Lake Park',},
-  ],
-  currentPage4: 1,
-  pageSize4: 8,
-  dialogVisible: false,
-  row :null,
-  userList :[],
-})
+// 格式化时间
+const formatTime = (time) => {
+  if (!time) return '';
+  return time.replace('T', ' ').substring(0, 16);
+};
 
-const edit = (row) => {
-  data.dialogVisible = true
-  data.row = row
-}
-const del = (id) => {
-  alert("删除id为" + id + "的数据")
-}
+// 加载数据
+const loadData = () => {
+  // 获取拍卖中的商品 (status=1)
+  request.get("/goods/list", { params: { status: 1 } }).then(res => {
+    if (res.code === '200') auctionList.value = res.data;
+  });
+
+  // 获取即将开始的商品 (status=4)
+  request.get("/goods/list", { params: { status: 4 } }).then(res => {
+    if (res.code === '200') upcomingList.value = res.data;
+  });
+};
+
+const handleDetail = (id) => {
+  ElMessage.info(`跳转到商品详情页 ID: ${id}`);
+  // router.push(`/goods/detail/${id}`);
+};
+
+const handlePublish = () => {
+  // 这里可以跳转到发布页面，或者弹出一个发布商品的 Dialog
+  ElMessage.info("跳转到发布商品页面...");
+  router.push('/manager/publish');
+};
+
+onMounted(() => {
+  loadData();
+});
 </script>
+
+<style scoped>
+.goods-card {
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+.goods-card:hover {
+  transform: translateY(-5px);
+}
+.card-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+.goods-name {
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.upcoming-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+.upcoming-item:last-child {
+  border-bottom: none;
+}
+.small-img {
+  width: 50px;
+  height: 50px;
+  border-radius: 4px;
+  object-fit: cover;
+  margin-right: 10px;
+}
+.upcoming-info {
+  flex: 1;
+  overflow: hidden;
+}
+.small-name {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+</style>

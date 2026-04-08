@@ -42,4 +42,20 @@
         ORDER BY create_time DESC
     </select>
 
+    <select id="selectByUserAccount" resultType="com.example.entity.Goods">
+        SELECT * FROM goods
+        <where>
+            <!-- 如果传入了账号，就按账号查 -->
+            <if test="userAccount != null and userAccount != ''">
+                AND user_account = #{userAccount}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByStatus" resultType="com.example.entity.Goods">
+        SELECT * FROM goods WHERE status = #{status}
+    </select>
+
+
 </mapper>

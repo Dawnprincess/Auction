@@ -13,6 +13,7 @@ const router = createRouter({
         {path:'goods', name:'goods',meta:{ title:'商品管理'}, component: () => import('../views/Goods.vue')},
         {path: 'goodsManage', name:'goodsManage', meta: { title:'商品管理'}, component: () => import('../views/GoodsManage.vue')},
         {path:'person', name:'person',meta:{ title:'个人中心'}, component: () => import('../views/Person.vue')},
+        {path: 'publish', name:'publish', meta: { title:'发布商品'}, component: () => import('../views/Publish.vue')},
       ]},
     {path: '/Login', name: 'Login', meta: { title:'登录'}, component: () => import('../views/Login.vue')},
     {path: '/Register', name: 'Register', meta: { title:'欢迎注册'}, component: () => import('../views/Register.vue')},

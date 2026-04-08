@@ -1,5 +1,6 @@
 package com.example.service;
 
+import cn.hutool.core.io.FileUtil;
 import com.example.entity.Goods;
 import com.example.entity.User;
 import com.example.exception.CustomException;
@@ -21,6 +22,9 @@ public class GoodsService {
     
     @Resource
     private UserMapper userMapper;
+
+    @Resource
+    private FileService fileService;
 
     /**
      * 新增商品（包含数据校验）
@@ -86,12 +90,38 @@ public class GoodsService {
                 throw new CustomException("500", "拍卖人账号不存在");
             }
         }
-        
+        // 获取更新前的商品信息
+        Goods oldGoods = selectById(goods.getId());
+        // 如果有新的头像且与旧头像不同，则删除旧头像
+        if (oldGoods != null && oldGoods.getImageUrl() != null &&
+                goods.getImageUrl() != null && !oldGoods.getImageUrl().equals(goods.getImageUrl())) {
+            String oldFileName = fileService.extractFileNameFromUrl(oldGoods.getImageUrl());
+            if (oldFileName != null) {
+                String filePath = System.getProperty("user.dir") + "/files/goods/" + oldFileName;
+                FileUtil.del(filePath);
+            }
+        }
         goodsMapper.update(goods);
     }
 
     public void deleteById(Integer id) {
-        goodsMapper.deleteById(id);
+        // 获取商品头像信息
+        Goods goods = goodsMapper.selectById(id);
+        // 检查商品是否存在
+        if (goods != null) {
+            // 检查头像是否为空
+            if (goods.getImageUrl() != null && !goods.getImageUrl().isEmpty()) {
+                String oldFileName = fileService.extractFileNameFromUrl(goods.getImageUrl());
+                // 如果有头像，删除头像文件
+                if (oldFileName != null) {
+                    String filePath = System.getProperty("user.dir") + "/files/goods/" + oldFileName;
+                    FileUtil.del(filePath);
+                }
+            }
+            goodsMapper.deleteById(id);
+        }else{
+            throw new CustomException("500", "商品不存在，无法删除");
+        }
     }
 
     public Goods selectById(Integer id) {
@@ -102,5 +132,13 @@ public class GoodsService {
         PageHelper.startPage(pageNum, pageSize);
         List<Goods> list = goodsMapper.selectAll(goods);
         return PageInfo.of(list);
+    }
+
+    public List<Goods> selectAll(Goods goods) {
+        return goodsMapper.selectAll(goods);
+    }
+
+    public List<Goods> selectByUserAccount(Goods goods) {
+        return goodsMapper.selectByUserAccount(goods);
     }
 }

@@ -44,8 +44,9 @@
 
         <el-menu-item index="/manager/person">
           <el-icon><User /></el-icon>
-          个人信息
+          个人中心
         </el-menu-item>
+
         <el-menu-item index="/login" @click="logout">
           <el-icon><SwitchButton /></el-icon>
           退出登录

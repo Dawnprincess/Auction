@@ -4,6 +4,7 @@
       <el-input v-model="searchName" placeholder="搜索商品名称" style="width: 200px"></el-input>
       <el-select v-model="searchStatus" placeholder="选择状态" style="width: 150px" clearable>
         <el-option label="待审核" :value="0"></el-option>
+        <el-option label="即将上架" :value="4"></el-option>
         <el-option label="拍卖中" :value="1"></el-option>
         <el-option label="已成交" :value="2"></el-option>
         <el-option label="流拍" :value="3"></el-option>
@@ -15,11 +16,13 @@
     <el-table :data="tableData" border stripe>
       <el-table-column prop="id" label="ID" width="80"></el-table-column>
       <el-table-column prop="name" label="商品名称"></el-table-column>
+      <el-table-column prop="userAccount" label="卖家账号"></el-table-column>
       <el-table-column prop="startPrice" label="起拍价" width="100"></el-table-column>
       <el-table-column prop="currentPrice" label="当前价" width="100"></el-table-column>
       <el-table-column label="状态" width="100">
         <template #default="scope">
           <el-tag v-if="scope.row.status === 0" type="warning">待审核</el-tag>
+          <el-tag v-else-if="scope.row.status === 4" type="primary">即将上架</el-tag>
           <el-tag v-else-if="scope.row.status === 1" type="success">拍卖中</el-tag>
           <el-tag v-else-if="scope.row.status === 2" type="info">已成交</el-tag>
           <el-tag v-else type="danger">流拍</el-tag>
@@ -29,7 +32,7 @@
       <el-table-column prop="endTime" label="结束时间" width="180"></el-table-column>
       <el-table-column label="操作" width="250" fixed="right">
         <template #default="scope">
-          <el-button v-if="scope.row.status === 0" size="small" type="success" @click="handleCheck(scope.row, 1)">通过</el-button>
+          <el-button v-if="scope.row.status === 0" size="small" type="success" @click="handleCheck(scope.row, 4)">通过</el-button>
           <el-button v-if="scope.row.status === 0" size="small" type="danger" @click="handleCheck(scope.row, 3)">驳回</el-button>
 
           <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
@@ -69,6 +72,7 @@
         <el-form-item label="商品状态">
           <el-select v-model="data.form.status" placeholder="请选择状态">
             <el-option label="待审核" :value="0"></el-option>
+            <el-option label="即将上架" :value="4"></el-option>
             <el-option label="拍卖中" :value="1"></el-option>
             <el-option label="已成交" :value="2"></el-option>
             <el-option label="流拍" :value="3"></el-option>
@@ -146,7 +150,15 @@ const loadData = () => {
 };
 
 const handleCheck = (row, status) => {
-  const msg = status === 1 ? "确认通过审核吗？" : "确认驳回该商品吗？";
+  let msg = "";
+  if (status === 4) {
+    msg = "确认通过审核并设为即将上架吗？";
+  } else if (status === 1) {
+    msg = "确认直接设为拍卖中吗？";
+  } else {
+    msg = "确认驳回该商品吗？";
+  }
+
   ElMessageBox.confirm(msg, "提示").then(() => {
     row.status = status;
     request.put("/goods/update", row).then(res => {

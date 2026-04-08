@@ -11,4 +11,6 @@ public interface GoodsMapper {
     void deleteById(Integer id);
     Goods selectById(Integer id);
     List<Goods> selectAll(Goods goods);
+    List<Goods> selectByUserAccount(Goods goods);
+    List<Goods> selectByStatus(Integer status);
 }
