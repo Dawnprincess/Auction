@@ -59,10 +59,10 @@
         <el-form-item label="起拍价"><el-input-number v-model="data.form.startPrice"></el-input-number></el-form-item>
         <el-form-item label="保留价"><el-input-number v-model="data.form.reservePrice"></el-input-number></el-form-item>
         <el-form-item label="开始时间">
-          <el-date-picker v-model="data.form.startTime" type="datetime" placeholder="选择开始时间" />
+          <el-date-picker v-model="data.form.startTime" type="datetime" placeholder="选择开始时间"/>
         </el-form-item>
         <el-form-item label="结束时间">
-          <el-date-picker v-model="data.form.endTime" type="datetime" placeholder="选择结束时间" />
+          <el-date-picker v-model="data.form.endTime" type="datetime" placeholder="选择结束时间"/>
         </el-form-item>
 
         <el-form-item label="拍卖人账号" prop="userAccount">
@@ -224,11 +224,33 @@ const save = () => {
 }
 
 const performGoodsUpdate = () => {
+  const formData = { ...data.form };
+
+  if (formData.startTime) {
+    const start = new Date(formData.startTime);
+    formData.startTime = start.getFullYear() + '-' +
+      String(start.getMonth() + 1).padStart(2, '0') + '-' +
+      String(start.getDate()).padStart(2, '0') + ' ' +
+      String(start.getHours()).padStart(2, '0') + ':' +
+      String(start.getMinutes()).padStart(2, '0') + ':' +
+      String(start.getSeconds()).padStart(2, '0');
+  }
+
+  if (formData.endTime) {
+    const end = new Date(formData.endTime);
+    formData.endTime = end.getFullYear() + '-' +
+      String(end.getMonth() + 1).padStart(2, '0') + '-' +
+      String(end.getDate()).padStart(2, '0') + ' ' +
+      String(end.getHours()).padStart(2, '0') + ':' +
+      String(end.getMinutes()).padStart(2, '0') + ':' +
+      String(end.getSeconds()).padStart(2, '0');
+  }
+
   let requestPromise;
-  if (data.form.id) {
-    requestPromise = request.put("/goods/update", data.form);
+  if (formData.id) {
+    requestPromise = request.put("/goods/update", formData);
   } else {
-    requestPromise = request.post("/goods/add", data.form);
+    requestPromise = request.post("/goods/add", formData);
   }
 
   requestPromise.then(res => {

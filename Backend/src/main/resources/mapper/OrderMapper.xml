@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.mapper.OrderMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO orders (order_no, goods_id, seller_account, buyer_account, price, status, create_time)
+        VALUES (#{orderNo}, #{goodsId}, #{sellerAccount}, #{buyerAccount}, #{price}, #{status}, NOW())
+    </insert>
+
+    <select id="selectByBuyerAccount" resultType="com.example.entity.Order">
+        SELECT * FROM orders WHERE buyer_account = #{buyerAccount} ORDER BY create_time DESC
+    </select>
+
+    <select id="selectBySellerAccount" resultType="com.example.entity.Order">
+        SELECT * FROM orders WHERE seller_account = #{sellerAccount} ORDER BY create_time DESC
+    </select>
+
+</mapper>

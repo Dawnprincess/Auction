@@ -99,8 +99,8 @@ const submitForm = () => {
   // 组装数据
   const data = {
     ...form,
-    userAccount: user.account, // 关键：传入当前登录用户的账号
-    status: 0 // 默认为待审核
+    userAccount: user.account,
+    status: 0
   };
 
   request.post("/goods/add", data).then(res => {

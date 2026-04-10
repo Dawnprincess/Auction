@@ -114,13 +114,11 @@ const loadData = () => {
 };
 
 const handleDetail = (id) => {
-  ElMessage.info(`跳转到商品详情页 ID: ${id}`);
-  // router.push(`/goods/detail/${id}`);
+  router.push(`/manager/goodsDetail/${id}`);
 };
 
 const handlePublish = () => {
   // 这里可以跳转到发布页面，或者弹出一个发布商品的 Dialog
-  ElMessage.info("跳转到发布商品页面...");
   router.push('/manager/publish');
 };
 

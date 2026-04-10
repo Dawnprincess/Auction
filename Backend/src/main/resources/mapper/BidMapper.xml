@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.BidMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO bid (goods_id, user_account, price, create_time)
+        VALUES (#{goodsId}, #{userAccount}, #{price}, NOW())
+    </insert>
+
+    <select id="selectByGoodsId" resultType="com.example.entity.Bid">
+        SELECT * FROM bid
+        WHERE goods_id = #{goodsId}
+        ORDER BY create_time DESC
+    </select>
+
+</mapper>

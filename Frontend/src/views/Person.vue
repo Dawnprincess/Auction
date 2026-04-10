@@ -282,10 +282,13 @@ const myGoodsList = ref([]);
 // 当切换到“我的发布”时加载数据
 const loadMyGoods = () => {
   const user = JSON.parse(localStorage.getItem('user'));
-  // 确保后端有这个接口，如果没有，可以用 /goods/selectPage?userId=xxx 代替
   request.get("/goods/myList", { params: { userAccount: user.account } }).then(res => {
     if (res.code === '200') myGoodsList.value = res.data;
   });
+};
+
+const handleDetail = (id) => {
+  router.push(`/manager/goodsDetail/${id}`);
 };
 
 // 监听标签切换

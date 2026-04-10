@@ -15,6 +15,9 @@ public class GoodsTask {
     @Resource
     private GoodsMapper goodsMapper;
 
+    @Resource
+    private com.example.service.OrderService orderService;
+
     // 每隔 1 分钟执行一次 (cron 表达式: 秒 分 时 日 月 周)
     @Scheduled(cron = "0/5 * * * * ?")
     public void autoStartAuction() {
@@ -36,6 +39,41 @@ public class GoodsTask {
                     goodsMapper.update(updateGoods);
                     System.out.println("商品 [" + goods.getName() + "] 已自动上架！");
                 }
+            }
+        }
+    }
+
+    @Scheduled(cron = "0/5 * * * * ?")
+    public void autoEndAuction() {
+        System.out.println("正在检查即将结束的拍卖...");
+
+        List<Goods> goodsList = goodsMapper.selectByStatus(1);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        for (Goods goods : goodsList) {
+            if (goods.getEndTime() != null && !now.isBefore(goods.getEndTime())) {
+                Goods updateGoods = new Goods();
+                updateGoods.setId(goods.getId());
+                
+                if (goods.getCurrentPrice() != null && 
+                    goods.getReservePrice() != null && 
+                    goods.getCurrentPrice().compareTo(goods.getReservePrice()) >= 0) {
+                    updateGoods.setStatus(2);
+                    System.out.println("商品 [" + goods.getName() + "] 已成交！成交价: ¥" + goods.getCurrentPrice());
+                    
+                    try {
+                        orderService.createOrder(goods.getId());
+                        System.out.println("订单已自动生成");
+                    } catch (Exception e) {
+                        System.err.println("订单生成失败: " + e.getMessage());
+                    }
+                } else {
+                    updateGoods.setStatus(3);
+                    System.out.println("商品 [" + goods.getName() + "] 已流拍！");
+                }
+                
+                goodsMapper.update(updateGoods);
             }
         }
     }

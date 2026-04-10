@@ -3,6 +3,8 @@ package com.example.entity;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 
 @Data
 public class Goods {
@@ -12,11 +14,18 @@ public class Goods {
     private BigDecimal startPrice;
     private BigDecimal currentPrice;
     private BigDecimal reservePrice;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     private LocalDateTime startTime;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     private LocalDateTime endTime;
+    
     private String userAccount;
-    private Integer status; // 0-待审核, 1-拍卖中, 2-已成交, 3-流拍
+    private Integer status;
     private String imageUrl;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     private LocalDateTime createTime;
 
     public LocalDateTime getCreateTime() {
