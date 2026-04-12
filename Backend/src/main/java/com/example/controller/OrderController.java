@@ -26,4 +26,18 @@ public class OrderController {
         List<Order> orders = orderService.getSellerOrders(account);
         return Result.success(orders);
     }
+
+    /**
+     * 模拟支付（更新订单状态）
+     */
+    @PutMapping("/pay/{id}")
+    public Result pay(@PathVariable Integer id) {
+        Order order = new Order();
+        order.setId(id);
+        order.setStatus(1); // 1-已支付
+        // 这里需要在 OrderMapper 中增加 update 方法，或者直接使用通用的 update
+        // 为了简单，我们假设 OrderMapper 有 update 方法
+        orderService.updateOrder(order); 
+        return Result.success();
+    }
 }

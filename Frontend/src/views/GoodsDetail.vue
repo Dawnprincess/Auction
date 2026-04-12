@@ -44,19 +44,27 @@
           </div>
 
           <!-- 出价区域 -->
-          <div v-if="canBid" style="display: flex; gap: 10px; margin-bottom: 20px;">
+          <div v-if="canBid && goods.auctionType !== 2" style="display: flex; gap: 10px; margin-bottom: 20px;">
             <el-input-number
               v-model="bidPrice"
               :min="minBidPrice"
-              :step="1"
+              :step="goods.priceChange || 1"
               :precision="2"
-              placeholder="请输入出价"
               style="flex: 1;"
             />
             <el-button type="danger" size="large" @click="handleBid" :loading="bidding">
-              立即出价
+              {{ goods.auctionType === 3 ? '提交密封出价' : '立即出价' }}
             </el-button>
           </div>
+
+          <!-- 荷兰式拍卖购买区域 -->
+          <div v-else-if="goods.auctionType === 2 && canBid" style="margin-bottom: 20px;">
+             <el-alert title="荷兰式拍卖：价格随时间递减，先到先得" type="warning" :closable="false" style="margin-bottom: 10px;" />
+             <el-button type="danger" size="large" style="width: 100%;" @click="handleBuyNow">
+               以当前价 ¥{{ goods.currentPrice }} 立即购买
+             </el-button>
+          </div>
+
           <el-alert
             v-else
             :title="auctionStatusText"
@@ -227,6 +235,31 @@ const handleBid = () => {
   }).catch(err => {
     console.error(err);
     ElMessage.error('出价失败，请重试');
+  }).finally(() => {
+    bidding.value = false;
+  });
+};
+
+// 荷兰式拍卖立即购买
+const handleBuyNow = () => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (!user) {
+    ElMessage.error('请先登录');
+    return;
+  }
+
+  bidding.value = true;
+  request.post('/bid/add', {
+    goodsId: goodsId,
+    userAccount: user.account,
+    price: goods.value.currentPrice
+  }).then(res => {
+    if (res.code === '200') {
+      ElMessage.success('购买成功！订单已生成');
+      loadGoodsDetail();
+    } else {
+      ElMessage.error(res.msg);
+    }
   }).finally(() => {
     bidding.value = false;
   });

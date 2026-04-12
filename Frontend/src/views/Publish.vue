@@ -1,144 +1,238 @@
 <template>
-  <div style="padding: 40px; max-width: 800px; margin: 0 auto; background-color: white; border-radius: 8px;">
-    <h2 style="margin-bottom: 30px; text-align: center;">发布拍卖商品</h2>
+  <div style="padding: 20px; max-width: 800px; margin: 0 auto;">
+    <el-card>
+      <template #header>
+        <div style="font-weight: bold;">发布拍卖商品</div>
+      </template>
 
-    <el-form :model="form" label-width="120px" ref="formRef">
-      <el-form-item label="商品名称" required>
-        <el-input v-model="form.name" placeholder="请输入商品名称"></el-input>
-      </el-form-item>
-
-      <el-form-item label="商品介绍">
-        <el-input v-model="form.intro" type="textarea" :rows="4" placeholder="请详细描述您的商品"></el-input>
-      </el-form-item>
-
-      <div style="display: flex; gap: 20px;">
-        <el-form-item label="起拍价" required>
-          <el-input-number v-model="form.startPrice" :min="0" :precision="2"></el-input-number>
+      <el-form ref="formRef" :model="form" label-width="120px">
+        <el-form-item label="商品名称" prop="name">
+          <el-input v-model="form.name" placeholder="请输入商品名称"></el-input>
         </el-form-item>
-        <el-form-item label="保留价" required>
-          <el-input-number v-model="form.reservePrice" :min="0" :precision="2"></el-input-number>
-        </el-form-item>
-      </div>
 
-      <el-form-item label="拍卖开始时间" required>
-        <el-date-picker
-            v-model="form.startTime"
-            type="datetime"
-            placeholder="选择拍卖开始时间"
+        <el-form-item label="商品分类" prop="category">
+          <el-select v-model="form.category" placeholder="请选择分类" @change="handleCategoryChange" style="width: 100%;">
+            <el-option label="艺术品" value="艺术品"></el-option>
+            <el-option label="收藏品" value="收藏品"></el-option>
+            <el-option label="生鲜食品" value="生鲜食品"></el-option>
+            <el-option label="库存清理" value="库存清理"></el-option>
+            <el-option label="其他" value="其他"></el-option>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="拍卖类型" prop="auctionType">
+          <el-radio-group v-model="form.auctionType">
+            <el-radio :label="1">英式拍卖（竞价）</el-radio>
+            <el-radio :label="2">荷兰式拍卖（降价）</el-radio>
+            <el-radio :label="3">密封式拍卖（暗标）</el-radio>
+          </el-radio-group>
+          <div style="color: #999; font-size: 12px; margin-top: 5px;">
+            {{ auctionTypeDesc }}
+          </div>
+        </el-form-item>
+
+        <el-form-item label="起拍价" prop="startPrice">
+          <el-input-number v-model="form.startPrice" :min="0" :precision="2" style="width: 100%;"></el-input-number>
+        </el-form-item>
+
+        <el-form-item label="保留价（底价）" prop="reservePrice">
+          <el-input-number v-model="form.reservePrice" :min="0" :precision="2" style="width: 100%;"></el-input-number>
+        </el-form-item>
+
+        <el-form-item label="价格梯度" prop="priceChange">
+          <el-input-number v-model="form.priceChange" :min="0" :precision="2" style="width: 100%;" />
+          <span style="margin-left: 10px; color: #666; font-size: 13px;">
+            {{ form.auctionType === 1 ? '每次最少加价金额' : (form.auctionType === 2 ? '每分钟自动降价金额' : '无需设置') }}
+          </span>
+        </el-form-item>
+
+        <el-form-item label="拍卖时间" prop="timeRange">
+          <el-date-picker
+            v-model="form.timeRange"
+            type="datetimerange"
+            range-separator="至"
+            start-placeholder="开始时间"
+            end-placeholder="结束时间"
             style="width: 100%;"
-        />
-      </el-form-item>
-      <el-form-item label="拍卖结束时间" required>
-        <el-date-picker
-          v-model="form.endTime"
-          type="datetime"
-          placeholder="选择拍卖结束时间"
-          style="width: 100%;"
-        />
-      </el-form-item>
+          />
+        </el-form-item>
 
-      <el-form-item label="商品图片" required>
-        <el-upload
-          class="goods-uploader"
-          action="http://localhost:8080/files/upload"
-          :data="{ type: 'goods' }"
-          :show-file-list="false"
-          :on-success="handleUploadSuccess"
-        >
-          <img v-if="form.imageUrl" :src="form.imageUrl" class="goods-img" />
-          <el-icon v-else class="uploader-icon"><Plus /></el-icon>
-        </el-upload>
-        <div style="color: #999; font-size: 12px; margin-top: 5px;">建议尺寸：800x800，支持 jpg/png</div>
-      </el-form-item>
+        <el-form-item label="商品介绍" prop="intro">
+          <el-input v-model="form.intro" type="textarea" :rows="4"></el-input>
+        </el-form-item>
 
-      <el-form-item>
-        <el-button type="primary" @click="submitForm" :loading="loading" style="width: 100%;">立即发布</el-button>
-        <el-button @click="cancel" style="width: 100%; margin-left: 0;">取消</el-button>
-      </el-form-item>
-    </el-form>
+        <el-form-item label="商品图片">
+          <el-upload
+            class="goods-uploader"
+            :show-file-list="false"
+            :auto-upload="false"
+            :on-change="handleImageChange"
+          >
+            <img v-if="form.imageUrl" :src="form.imageUrl" class="goods-img" />
+            <el-icon v-else class="uploader-icon"><Plus /></el-icon>
+          </el-upload>
+        </el-form-item>
+
+        <el-form-item>
+          <el-button type="primary" @click="submitForm" :loading="loading">立即发布</el-button>
+          <el-button @click="resetForm">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from "vue";
-import request from "@/utils/request.js";
-import { ElMessage } from "element-plus";
+import { reactive, ref, computed } from 'vue';
+import request from '@/utils/request.js';
+import { ElMessage } from 'element-plus';
 import { Plus } from '@element-plus/icons-vue';
-import router from "@/router/index.js";
+import router from '@/router/index.js';
 
-const loading = ref(false);
 const formRef = ref();
+const loading = ref(false);
+const pendingImageFile = ref(null);
+
 const form = reactive({
   name: '',
-  intro: '',
+  category: '其他',
+  auctionType: 1,
   startPrice: 0,
   reservePrice: 0,
-  startTime: '',
-  endTime: '',
+  priceChange: 10,
+  timeRange: [],
+  intro: '',
   imageUrl: ''
 });
 
-const handleUploadSuccess = (res) => {
-  if (res.code === '200') {
-    form.imageUrl = res.data;
-    ElMessage.success("图片上传成功");
-  } else {
-    ElMessage.error(res.msg);
+const auctionTypeDesc = computed(() => {
+  const descs = {
+    1: '传统拍卖，价格由低到高，价高者得。',
+    2: '价格由高到低递减，第一个接受价格的买家成交。',
+    3: '所有买家秘密出价，结束后最高价者成交。'
+  };
+  return descs[form.auctionType];
+});
+
+const handleCategoryChange = (val) => {
+  const recommendations = {
+    '艺术品': { type: 1, change: 50 },
+    '收藏品': { type: 1, change: 100 },
+    '生鲜食品': { type: 2, change: 5 },
+    '库存清理': { type: 2, change: 10 },
+  };
+
+  if (recommendations[val]) {
+    form.auctionType = recommendations[val].type;
+    form.priceChange = recommendations[val].change;
+    ElMessage.success(`已为您智能推荐：${form.auctionType === 1 ? '英式' : '荷兰式'}拍卖模式`);
   }
 };
 
+const handleImageChange = (file) => {
+  if (file.size / 1024 > 1024) {
+    ElMessage.error('图片大小不能超过1MB');
+    return;
+  }
+  form.imageUrl = URL.createObjectURL(file.raw);
+  pendingImageFile.value = file.raw;
+};
+
 const submitForm = () => {
-  if (!form.name || !form.startPrice || !form.endTime || !form.imageUrl) {
-    ElMessage.warning("请填写所有必填项并上传图片");
+  if (!form.name || !form.startPrice) {
+    ElMessage.warning('请填写完整商品信息');
     return;
   }
 
   loading.value = true;
   const user = JSON.parse(localStorage.getItem('user'));
 
-  // 组装数据
-  const data = {
-    ...form,
-    userAccount: user.account,
-    status: 0
+  // 处理时间
+  let startTime = '';
+  let endTime = '';
+  if (form.timeRange && form.timeRange.length === 2) {
+    const start = new Date(form.timeRange[0]);
+    startTime = start.getFullYear() + '-' +
+      String(start.getMonth() + 1).padStart(2, '0') + '-' +
+      String(start.getDate()).padStart(2, '0') + ' ' +
+      String(start.getHours()).padStart(2, '0') + ':' +
+      String(start.getMinutes()).padStart(2, '0') + ':' +
+      String(start.getSeconds()).padStart(2, '0');
+
+    const end = new Date(form.timeRange[1]);
+    endTime = end.getFullYear() + '-' +
+      String(end.getMonth() + 1).padStart(2, '0') + '-' +
+      String(end.getDate()).padStart(2, '0') + ' ' +
+      String(end.getHours()).padStart(2, '0') + ':' +
+      String(end.getMinutes()).padStart(2, '0') + ':' +
+      String(end.getSeconds()).padStart(2, '0');
+
+    if (end <= start) {
+      ElMessage.error("结束时间必须晚于开始时间");
+      loading.value = false;
+      return;
+    }
+  }
+
+  // 如果有图片先上传图片
+  const uploadAndSubmit = (imageUrl) => {
+    const submitData = {
+      name: form.name,
+      category: form.category,
+      auctionType: form.auctionType,
+      startPrice: form.startPrice,
+      reservePrice: form.reservePrice,
+      priceChange: form.priceChange,
+      intro: form.intro,
+      imageUrl: imageUrl,
+      userAccount: user.account,
+      startTime: startTime,
+      endTime: endTime,
+      status: 0 // 默认待审核
+    };
+
+    request.post('/goods/add', submitData).then(res => {
+      if (res.code === '200') {
+        ElMessage.success('发布成功，请等待管理员审核');
+        router.push('/manager/person');
+      } else {
+        ElMessage.error(res.msg);
+      }
+    }).finally(() => {
+      loading.value = false;
+    });
   };
 
-  request.post("/goods/add", data).then(res => {
-    loading.value = false;
-    if (res.code === '200') {
-      ElMessage.success("发布成功！请等待管理员审核。");
-      router.push("/manager/person"); // 发布成功后跳回个人中心
-    } else {
-      ElMessage.error(res.msg);
-    }
-  }).catch(() => {
-    loading.value = false;
-  });
+  if (pendingImageFile.value) {
+    const formData = new FormData();
+    formData.append('file', pendingImageFile.value);
+    formData.append('type', 'goods');
+    request.post('/files/upload', formData).then(res => {
+      if (res.code === '200') {
+        uploadAndSubmit(res.data);
+      } else {
+        ElMessage.error('图片上传失败');
+        loading.value = false;
+      }
+    });
+  } else {
+    uploadAndSubmit(form.imageUrl);
+  }
 };
 
-const cancel = () => {
-  router.back();
+const resetForm = () => {
+  formRef.value?.resetFields();
+  form.imageUrl = '';
+  pendingImageFile.value = null;
 };
 </script>
 
 <style scoped>
-.goods-uploader .goods-img {
+.goods-img {
   width: 178px;
   height: 178px;
   display: block;
   object-fit: cover;
-  border-radius: 6px;
-}
-.goods-uploader .el-upload {
-  border: 1px dashed var(--el-border-color);
-  border-radius: 6px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: var(--el-transition-duration-fast);
-}
-.goods-uploader .el-upload:hover {
-  border-color: var(--el-color-primary);
 }
 .uploader-icon {
   font-size: 28px;
@@ -146,5 +240,8 @@ const cancel = () => {
   width: 178px;
   height: 178px;
   text-align: center;
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  line-height: 178px;
 }
 </style>

@@ -38,9 +38,19 @@ public class GoodsService {
             throw new CustomException("500", "价格信息不能为空");
         }
 
-        // 2. 逻辑校验：保留价不能低于起拍价
-        if (goods.getReservePrice().compareTo(goods.getStartPrice()) < 0) {
-            throw new CustomException("500", "保留价不能低于起拍价");
+        // 2. 逻辑校验：根据拍卖类型判断价格关系
+        int auctionType = goods.getAuctionType() != null ? goods.getAuctionType() : 1; // 默认英式
+        
+        if (auctionType == 1 || auctionType == 3) {
+            // 英式/密封式：保留价（底价）不能低于起拍价
+            if (goods.getReservePrice().compareTo(goods.getStartPrice()) < 0) {
+                throw new CustomException("500", "保留价不能低于起拍价");
+            }
+        } else if (auctionType == 2) {
+            // 荷兰式：起拍价（高价）不能低于保留价（低价）
+            if (goods.getStartPrice().compareTo(goods.getReservePrice()) < 0) {
+                throw new CustomException("500", "荷兰式拍卖中，起拍价（最高价）不能低于保留价（最低价）");
+            }
         }
 
         // 3. 逻辑校验：时间合理性

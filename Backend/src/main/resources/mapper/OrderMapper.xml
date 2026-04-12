@@ -15,4 +15,12 @@
         SELECT * FROM orders WHERE seller_account = #{sellerAccount} ORDER BY create_time DESC
     </select>
 
+    <update id="update">
+        UPDATE orders
+        <set>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
 </mapper>

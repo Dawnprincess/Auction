@@ -21,6 +21,9 @@ public class BidService {
     @Resource
     private GoodsMapper goodsMapper;
 
+    @Resource
+    private OrderService orderService; // 注入订单服务
+
     /**
      * 提交出价（包含事务）
      */
@@ -37,19 +40,35 @@ public class BidService {
             throw new CustomException("500", "该商品不在拍卖中，无法出价");
         }
 
-        // 3. 校验出价必须高于当前价
-        if (bid.getPrice().compareTo(goods.getCurrentPrice()) <= 0) {
-            throw new CustomException("500", "出价必须高于当前价格 ¥" + goods.getCurrentPrice());
+        // 针对不同拍卖类型的校验
+        if (goods.getAuctionType() == 1) {
+            // 英式拍卖：必须高于当前价 + 梯度
+            BigDecimal minNextPrice = goods.getCurrentPrice().add(goods.getPriceChange() != null ? goods.getPriceChange() : new BigDecimal("1"));
+            if (bid.getPrice().compareTo(minNextPrice) < 0) {
+                throw new CustomException("500", "加价幅度不能小于 ¥" + goods.getPriceChange());
+            }
+            // 更新当前价
+            Goods updateGoods = new Goods();
+            updateGoods.setId(goods.getId());
+            updateGoods.setCurrentPrice(bid.getPrice());
+            goodsMapper.update(updateGoods);
+            
+        } else if (goods.getAuctionType() == 2) {
+            // 荷兰式拍卖：直接成交
+            // 1. 插入出价记录
+            bidMapper.insert(bid);
+            // 2. 生成订单
+            orderService.createOrder(goods.getId(), bid.getUserAccount(), bid.getPrice());
+            // 3. 更新商品状态为已成交
+            Goods updateGoods = new Goods();
+            updateGoods.setId(goods.getId());
+            updateGoods.setStatus(2); // 2-已成交
+            goodsMapper.update(updateGoods);
+            return; // 荷兰式直接返回，不执行后面的通用逻辑
         }
 
-        // 4. 插入出价记录
+        // 英式拍卖插入记录
         bidMapper.insert(bid);
-
-        // 5. 更新商品当前价格
-        Goods updateGoods = new Goods();
-        updateGoods.setId(goods.getId());
-        updateGoods.setCurrentPrice(bid.getPrice());
-        goodsMapper.update(updateGoods);
     }
 
     /**

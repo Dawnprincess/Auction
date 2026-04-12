@@ -8,6 +8,7 @@ import com.example.mapper.OrderMapper;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -26,15 +27,13 @@ public class OrderService {
         return "ORD" + IdUtil.fastSimpleUUID().substring(0, 16).toUpperCase();
     }
 
-    public void createOrder(Integer goodsId) {
+    /**
+     * 创建订单（通用版，支持指定买家和价格）
+     */
+    public void createOrder(Integer goodsId, String buyerAccount, BigDecimal price) {
         Goods goods = goodsMapper.selectById(goodsId);
         if (goods == null) {
             throw new RuntimeException("商品不存在");
-        }
-
-        String buyerAccount = getHighestBidder(goodsId);
-        if (buyerAccount == null || buyerAccount.isEmpty()) {
-            throw new RuntimeException("没有出价记录，无法生成订单");
         }
 
         Order order = new Order();
@@ -42,10 +41,20 @@ public class OrderService {
         order.setGoodsId(goodsId);
         order.setSellerAccount(goods.getUserAccount());
         order.setBuyerAccount(buyerAccount);
-        order.setPrice(goods.getCurrentPrice());
-        order.setStatus(0);
+        order.setPrice(price);
+        order.setStatus(0); // 0-待支付
 
         orderMapper.insert(order);
+    }
+
+    /**
+     * 创建订单（自动结算版，用于英式/密封式结束）
+     */
+    public void createOrder(Integer goodsId) {
+        // 这里可以保留之前的逻辑，通过查询 bid 表找最高价者
+        String buyerAccount = getHighestBidder(goodsId);
+        Goods goods = goodsMapper.selectById(goodsId);
+        createOrder(goodsId, buyerAccount, goods.getCurrentPrice());
     }
 
     private String getHighestBidder(Integer goodsId) {
@@ -60,4 +69,9 @@ public class OrderService {
     public List<Order> getSellerOrders(String sellerAccount) {
         return orderMapper.selectBySellerAccount(sellerAccount);
     }
+
+    public void updateOrder(Order order) {
+        orderMapper.update(order);
+    }
+
 }

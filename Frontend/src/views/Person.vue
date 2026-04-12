@@ -98,7 +98,40 @@
         </el-tab-pane>
 
         <el-tab-pane v-if="data.user.accessId === 1" label="我的订单" name="myOrders">
-          <el-empty description="暂无订单记录" />
+          <el-table :data="myOrderList" border stripe style="margin-top: 10px;">
+            <el-table-column prop="orderNo" label="订单号" width="180"></el-table-column>
+            <el-table-column prop="goodsId" label="商品ID" width="100"></el-table-column>
+            <el-table-column prop="price" label="成交价格" width="120">
+              <template #default="scope">
+                <span style="color: #f56c6c; font-weight: bold;">¥{{ scope.row.price }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="订单状态" width="120">
+              <template #default="scope">
+                <el-tag v-if="scope.row.status === 0" type="warning">待支付</el-tag>
+                <el-tag v-else-if="scope.row.status === 1" type="success">已支付</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="createTime" label="成交时间">
+              <template #default="scope">
+                {{ formatTime(scope.row.createTime) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="120">
+              <template #default="scope">
+                <el-button
+                  v-if="scope.row.status === 0"
+                  size="small"
+                  type="primary"
+                  @click="handlePay(scope.row.id)"
+                >
+                  模拟支付
+                </el-button>
+                <span v-else style="color: #999; font-size: 12px;">已完成</span>
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-empty v-if="myOrderList.length === 0" description="暂无订单记录" />
         </el-tab-pane>
 
       </el-tabs>
@@ -121,7 +154,7 @@
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue'; // 【修改点1】导入 watch
 import request from "@/utils/request.js";
-import {ElMessage} from "element-plus";
+import {ElMessage, ElMessageBox} from "element-plus"; // 引入 ElMessageBox
 import { Plus } from '@element-plus/icons-vue';
 import router from "@/router/index.js";
 
@@ -278,6 +311,13 @@ const performUserUpdate = () => {
 
 const activeTab = ref('info');
 const myGoodsList = ref([]);
+const myOrderList = ref([]); // 新增订单列表
+
+// 格式化时间工具函数
+const formatTime = (time) => {
+  if (!time) return '';
+  return time.replace('T', ' ').substring(0, 19);
+};
 
 // 当切换到“我的发布”时加载数据
 const loadMyGoods = () => {
@@ -287,14 +327,33 @@ const loadMyGoods = () => {
   });
 };
 
-const handleDetail = (id) => {
-  router.push(`/manager/goodsDetail/${id}`);
+// 加载我的订单
+const loadMyOrders = () => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  request.get(`/order/buyer/${user.account}`).then(res => {
+    if (res.code === '200') myOrderList.value = res.data;
+  });
+};
+
+const handlePay = (orderId) => {
+  ElMessageBox.confirm('确认支付该笔订单吗？', '提示').then(() => {
+    request.put(`/order/pay/${orderId}`).then(res => {
+      if (res.code === '200') {
+        ElMessage.success('支付成功！');
+        loadMyOrders(); // 重新加载列表以更新状态
+      } else {
+        ElMessage.error(res.msg);
+      }
+    });
+  });
 };
 
 // 监听标签切换
 watch(activeTab, (newVal) => {
   if (newVal === 'myGoods') {
     loadMyGoods();
+  } else if (newVal === 'myOrders') {
+    loadMyOrders();
   }
 });
 </script>

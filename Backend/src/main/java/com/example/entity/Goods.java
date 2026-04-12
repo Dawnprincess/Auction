@@ -27,6 +27,33 @@ public class Goods {
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     private LocalDateTime createTime;
+    private Integer auctionType; // 1-英式 2-荷兰式 3-密封式
+    private BigDecimal priceChange; // 价格变化梯度
+    private String category; // 商品分类
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public BigDecimal getPriceChange() {
+        return priceChange;
+    }
+
+    public void setPriceChange(BigDecimal priceChange) {
+        this.priceChange = priceChange;
+    }
+
+    public Integer getAuctionType() {
+        return auctionType;
+    }
+
+    public void setAuctionType(Integer auctionType) {
+        this.auctionType = auctionType;
+    }
 
     public LocalDateTime getCreateTime() {
         return createTime;

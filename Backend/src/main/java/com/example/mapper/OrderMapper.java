@@ -12,4 +12,7 @@ public interface OrderMapper {
     List<Order> selectByBuyerAccount(String buyerAccount);
 
     List<Order> selectBySellerAccount(String sellerAccount);
+
+    void update(Order order);
+
 }

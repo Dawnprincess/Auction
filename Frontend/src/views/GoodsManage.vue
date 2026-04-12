@@ -79,6 +79,30 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item label="商品分类">
+          <el-select v-model="data.form.category" placeholder="请选择分类" @change="handleCategoryChange">
+            <el-option label="艺术品" value="艺术品"></el-option>
+            <el-option label="生鲜食品" value="生鲜食品"></el-option>
+            <el-option label="库存清理" value="库存清理"></el-option>
+            <el-option label="其他" value="其他"></el-option>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="拍卖类型">
+          <el-radio-group v-model="data.form.auctionType">
+            <el-radio :label="1">英式拍卖</el-radio>
+            <el-radio :label="2">荷兰式拍卖</el-radio>
+            <el-radio :label="3">密封式拍卖</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
+        <el-form-item label="价格梯度">
+          <el-input-number v-model="data.form.priceChange" :min="0" :precision="2" />
+          <span style="margin-left: 10px; color: #999; font-size: 12px;">
+            {{ data.form.auctionType === 1 ? '最小加价幅度' : (data.form.auctionType === 2 ? '每分钟降价金额' : '无意义') }}
+          </span>
+        </el-form-item>
+
         <el-form-item label="商品图片" :label-width="'100px'">
           <el-upload
               class="goods-uploader"
@@ -119,6 +143,8 @@ const formRef = ref()
 const data = reactive({
   form: {
     status: 0,
+    auctionType: 1, // 默认英式
+    priceChange: 10,
   },
   pendingImageFile: null,
   rules:{
@@ -181,8 +207,22 @@ const handleDelete = (id) => {
   });
 };
 
+const handleCategoryChange = (val) => {
+  const recommendations = {
+    '艺术品': { type: 1, change: 50 },
+    '生鲜食品': { type: 2, change: 5 },
+    '库存清理': { type: 2, change: 10 },
+  };
+
+  if (recommendations[val]) {
+    data.form.auctionType = recommendations[val].type;
+    data.form.priceChange = recommendations[val].change;
+    ElMessage.success(`已为您智能推荐：${data.form.auctionType === 1 ? '英式' : '荷兰式'}拍卖`);
+  }
+};
+
 const openAddDialog = () => {
-  data.form = {status: 0};
+  data.form = {status: 0, auctionType: 1, priceChange: 10};
   data.pendingImageFile = null;
   dialogVisible.value = true;
 };
