@@ -11,6 +11,7 @@ import com.github.pagehelper.PageInfo;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -37,44 +38,72 @@ public class GoodsService {
         if (goods.getStartPrice() == null || goods.getReservePrice() == null) {
             throw new CustomException("500", "价格信息不能为空");
         }
-
-        // 2. 逻辑校验：根据拍卖类型判断价格关系
-        int auctionType = goods.getAuctionType() != null ? goods.getAuctionType() : 1; // 默认英式
-        
-        if (auctionType == 1 || auctionType == 3) {
-            // 英式/密封式：保留价（底价）不能低于起拍价
-            if (goods.getReservePrice().compareTo(goods.getStartPrice()) < 0) {
-                throw new CustomException("500", "保留价不能低于起拍价");
-            }
-        } else if (auctionType == 2) {
-            // 荷兰式：起拍价（高价）不能低于保留价（低价）
-            if (goods.getStartPrice().compareTo(goods.getReservePrice()) < 0) {
-                throw new CustomException("500", "荷兰式拍卖中，起拍价（最高价）不能低于保留价（最低价）");
-            }
+        if (goods.getUserAccount() == null || goods.getUserAccount().isEmpty()) {
+            throw new CustomException("500", "发布者账号不能为空");
         }
 
-        // 3. 逻辑校验：时间合理性
+        // 2. 拍卖类型默认值处理
+        if (goods.getAuctionType() == null) {
+            goods.setAuctionType(1); // 默认英式
+        }
+        if (goods.getPriceChange() == null) {
+            goods.setPriceChange(new BigDecimal("0"));
+        }
+
+        int type = goods.getAuctionType();
+
+        // 3. 针对不同拍卖类型的专项校验
+        if (type == 1) { 
+            // --- 英式拍卖校验 ---
+            if (goods.getReservePrice().compareTo(goods.getStartPrice()) < 0) {
+                throw new CustomException("500", "英式拍卖：保留价不能低于起拍价");
+            }
+            if (goods.getPriceChange().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new CustomException("500", "英式拍卖：最小加价幅度必须大于0");
+            }
+        } else if (type == 2) { 
+            // --- 荷兰式拍卖校验 ---
+            if (goods.getStartPrice().compareTo(goods.getReservePrice()) < 0) {
+                throw new CustomException("500", "荷兰式拍卖：起拍价（最高价）不能低于保留价（最低价）");
+            }
+            if (goods.getPriceChange().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new CustomException("500", "荷兰式拍卖：每分钟降价金额必须大于0");
+            }
+        } else if (type == 3) { 
+            // --- 密封式拍卖校验 ---
+            // 强制将梯度设为0，防止前端传错
+            goods.setPriceChange(BigDecimal.ZERO); 
+            
+            if (goods.getReservePrice().compareTo(goods.getStartPrice()) < 0) {
+                 throw new CustomException("500", "密封拍卖：保留价不能低于最低出价限制");
+            }
+        } else {
+            throw new CustomException("500", "不支持的拍卖类型");
+        }
+
+        // 4. 逻辑校验：时间合理性
         if (goods.getStartTime() != null && goods.getEndTime() != null) {
             if (!goods.getEndTime().isAfter(goods.getStartTime())) {
                 throw new CustomException("500", "拍卖结束时间必须晚于开始时间");
             }
-            // 可选：禁止发布过去时间的拍卖
+            // 禁止发布过去时间的拍卖
             if (goods.getEndTime().isBefore(LocalDateTime.now())) {
                 throw new CustomException("500", "拍卖结束时间不能早于当前时间");
             }
-        }
-
-        if (goods.getUserAccount() == null || goods.getUserAccount().isEmpty()) {
-            throw new CustomException("500", "拍卖人账号不能为空");
+        } else {
+            throw new CustomException("500", "拍卖开始和结束时间不能为空");
         }
         
+        // 5. 用户存在性校验
         User user = userMapper.selectByAccount(goods.getUserAccount());
         if (user == null) {
-            throw new CustomException("500", "拍卖人账号不存在");
+            throw new CustomException("500", "发布者账号不存在");
         }
 
+        // 6. 初始化字段
         if (goods.getCurrentPrice() == null) {
-            goods.setCurrentPrice(goods.getStartPrice()); // 初始当前价等于起拍价
+            // 英式和密封式初始价为起拍价，荷兰式初始价也为起拍价（随后由定时任务递减）
+            goods.setCurrentPrice(goods.getStartPrice()); 
         }
         if (goods.getStatus() == null) {
             goods.setStatus(0); // 默认为待审核状态
