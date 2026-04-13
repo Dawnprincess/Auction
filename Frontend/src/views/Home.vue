@@ -43,7 +43,13 @@
             <img :src="goods.imageUrl" class="card-img" />
             <div style="padding: 10px 0;">
               <div class="goods-name">{{ goods.name }}</div>
-              <div style="display: flex; justify-content: space-between; margin-top: 10px; color: #666; font-size: 14px;">
+
+              <!-- 根据拍卖类型显示不同价格 -->
+              <div v-if="goods.auctionType === 3" style="display: flex; justify-content: space-between; margin-top: 10px; color: #666; font-size: 14px;">
+                <span>起拍价:</span>
+                <span style="color: #409eff; font-weight: bold; font-size: 16px;">¥{{ goods.startPrice }}</span>
+              </div>
+              <div v-else style="display: flex; justify-content: space-between; margin-top: 10px; color: #666; font-size: 14px;">
                 <span>当前价:</span>
                 <span style="color: #f56c6c; font-weight: bold; font-size: 16px;">¥{{ goods.currentPrice }}</span>
               </div>

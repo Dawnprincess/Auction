@@ -40,9 +40,15 @@
         </el-form-item>
 
         <el-form-item label="价格梯度" prop="priceChange">
-          <el-input-number v-model="form.priceChange" :min="0" :precision="2" style="width: 100%;" />
+          <el-input-number
+            v-model="form.priceChange"
+            :min="0"
+            :precision="2"
+            :disabled="form.auctionType === 3"
+            style="width: 100%;"
+          />
           <span style="margin-left: 10px; color: #666; font-size: 13px;">
-            {{ form.auctionType === 1 ? '每次最少加价金额' : (form.auctionType === 2 ? '每分钟自动降价金额' : '无需设置') }}
+            {{ form.auctionType === 1 ? '每次最少加价金额' : (form.auctionType === 2 ? '每分钟自动降价金额' : '密封拍卖无需设置') }}
           </span>
         </el-form-item>
 
@@ -83,7 +89,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed } from 'vue';
+import { reactive, ref, computed, watch } from 'vue';
 import request from '@/utils/request.js';
 import { ElMessage } from 'element-plus';
 import { Plus } from '@element-plus/icons-vue';
@@ -128,6 +134,20 @@ const handleCategoryChange = (val) => {
     ElMessage.success(`已为您智能推荐：${form.auctionType === 1 ? '英式' : '荷兰式'}拍卖模式`);
   }
 };
+
+// 监听拍卖类型变化
+watch(() => form.auctionType, (newType) => {
+  if (newType === 3) {
+    // 切换到密封式：清空梯度，因为用不到
+    form.priceChange = 0;
+  } else if (newType === 1) {
+    // 切换到英式：给一个合理的默认加价幅度
+    form.priceChange = 10;
+  } else if (newType === 2) {
+    // 切换到荷兰式：给一个合理的默认降价幅度
+    form.priceChange = 5;
+  }
+});
 
 const handleImageChange = (file) => {
   if (file.size / 1024 > 1024) {

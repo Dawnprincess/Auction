@@ -21,18 +21,32 @@
 
           <!-- 价格信息 -->
           <div style="background-color: #f5f7fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-              <span style="color: #999;">起拍价</span>
-              <span style="font-size: 18px; color: #333;">¥{{ goods.startPrice }}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-              <span style="color: #999;">当前价</span>
-              <span style="font-size: 28px; color: #f56c6c; font-weight: bold;">¥{{ goods.currentPrice }}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-              <span style="color: #999;">保留价</span>
-              <span style="font-size: 18px; color: #333;">¥{{ goods.reservePrice }}</span>
-            </div>
+            <!-- 英式/荷兰式：显示完整价格信息 -->
+            <template v-if="goods.auctionType !== 3">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <span style="color: #999;">起拍价</span>
+                <span style="font-size: 18px; color: #333;">¥{{ goods.startPrice }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <span style="color: #999;">当前价</span>
+                <span style="font-size: 28px; color: #f56c6c; font-weight: bold;">¥{{ goods.currentPrice }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: #999;">保留价</span>
+                <span style="font-size: 18px; color: #333;">¥{{ goods.reservePrice }}</span>
+              </div>
+            </template>
+
+            <!-- 密封式：只显示起拍价（作为最低出价限制） -->
+            <template v-else>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <span style="color: #999;">最低出价限制</span>
+                <span style="font-size: 18px; color: #333;">¥{{ goods.startPrice }}</span>
+              </div>
+              <div style="color: #999; font-size: 13px; margin-top: 10px;">
+                💡 提示：密封拍卖不设公开当前价，最终成交价将在结束后公布。
+              </div>
+            </template>
           </div>
 
           <!-- 倒计时 -->
@@ -50,10 +64,17 @@
               :min="minBidPrice"
               :step="goods.priceChange || 1"
               :precision="2"
+              :disabled="hasUserBid"
               style="flex: 1;"
             />
-            <el-button type="danger" size="large" @click="handleBid" :loading="bidding">
-              {{ goods.auctionType === 3 ? '提交密封出价' : '立即出价' }}
+            <el-button
+              type="danger"
+              size="large"
+              @click="handleBid"
+              :loading="bidding"
+              :disabled="hasUserBid"
+            >
+              {{ hasUserBid ? '您已出价' : (goods.auctionType === 3 ? '提交密封出价' : '立即出价') }}
             </el-button>
           </div>
 
@@ -65,8 +86,17 @@
              </el-button>
           </div>
 
+          <!-- 密封式拍卖提示 -->
           <el-alert
-            v-else
+            v-if="goods.auctionType === 3 && canBid"
+            title="🔒 密封拍卖中：您的出价将严格保密，直到拍卖结束才公布结果。每人限出价一次，价最高者获拍。"
+            type="warning"
+            :closable="false"
+            style="margin-bottom: 20px;"
+          />
+
+          <el-alert
+            v-else-if="!canBid"
             :title="auctionStatusText"
             type="info"
             :closable="false"
@@ -120,16 +150,20 @@ const goodsId = route.params.id;
 
 const goods = ref({});
 const bidList = ref([]);
-const bidPrice = ref(0);
+const bidPrice = ref(0); // 这个变量只受用户控制和初始化控制，不受轮询影响
 const bidding = ref(false);
 const countdownText = ref('');
 const countdownColor = ref('#333');
 const defaultImage = defaultImageSrc;
 let timer = null;
 
-// 计算最低出价（当前价 + 1）
-const minBidPrice = computed(() => {
-  return goods.value.currentPrice ? Number(goods.value.currentPrice) + 1 : 0;
+// 计算属性：判断当前用户是否已经出过价
+const hasUserBid = computed(() => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (!user || !bidList.value.length) return false;
+  // 注意：在密封式拍卖未结束前，bidList 可能是空的（因为后端隐藏了），
+  // 所以这里主要依赖后端报错，或者我们在 loadBidList 时特殊处理返回自己的出价
+  return bidList.value.some(bid => bid.userAccount === user.account);
 });
 
 // 判断是否可以出价
@@ -156,8 +190,15 @@ const formatTime = (time) => {
 const loadGoodsDetail = () => {
   request.get(`/goods/detail/${goodsId}`).then(res => {
     if (res.code === '200') {
+      const oldStatus = goods.value.status;
       goods.value = res.data;
-      bidPrice.value = minBidPrice.value;
+
+      // 只有当用户还没开始输入，或者拍卖状态发生变化时，才重置 bidPrice
+      // 如果 bidPrice 还是初始值 0，说明用户没动过，可以同步最新起拍价
+      if (bidPrice.value === 0) {
+         bidPrice.value = minBidPrice.value;
+      }
+
       updateCountdown();
     }
   });
@@ -205,11 +246,27 @@ const updateCountdown = () => {
   }
 };
 
+// 计算最低出价（当前价 + 梯度）
+const minBidPrice = computed(() => {
+  if (!goods.value.startPrice) return 0;
+  // 英式：当前价+梯度；荷兰式/密封式：起拍价或保留价
+  if (goods.value.auctionType === 1) {
+     return goods.value.currentPrice ? Number(goods.value.currentPrice) + (Number(goods.value.priceChange) || 1) : 0;
+  }
+  return Number(goods.value.startPrice);
+});
+
 // 出价
 const handleBid = () => {
-  if (bidPrice.value <= goods.value.currentPrice) {
-    ElMessage.error('出价必须高于当前价格');
-    return;
+  // 密封式拍卖的特殊校验
+  if (goods.value.auctionType === 3) {
+    if (bidList.value.some(bid => bid.userAccount === JSON.parse(localStorage.getItem('user')).account)) {
+      ElMessage.warning("密封拍卖每人只能出价一次，您已提交过出价");
+      return;
+    }
+  } else if (bidPrice.value <= goods.value.currentPrice) {
+     ElMessage.error('出价必须高于当前价格');
+     return;
   }
 
   const user = JSON.parse(localStorage.getItem('user'));
@@ -221,20 +278,17 @@ const handleBid = () => {
   bidding.value = true;
   request.post('/bid/add', {
     goodsId: goodsId,
-    userAccount: user.account,
-    price: bidPrice.value
+    userAccount: JSON.parse(localStorage.getItem('user')).account,
+    price: bidPrice.value // 提交的是本地变量，不会被轮询干扰
   }).then(res => {
     if (res.code === '200') {
       ElMessage.success('出价成功');
       loadGoodsDetail();
       loadBidList();
-      bidPrice.value = minBidPrice.value;
+      bidPrice.value = minBidPrice.value; // 成功后再重置
     } else {
       ElMessage.error(res.msg);
     }
-  }).catch(err => {
-    console.error(err);
-    ElMessage.error('出价失败，请重试');
   }).finally(() => {
     bidding.value = false;
   });

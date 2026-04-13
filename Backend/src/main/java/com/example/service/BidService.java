@@ -64,7 +64,15 @@ public class BidService {
             updateGoods.setId(goods.getId());
             updateGoods.setStatus(2); // 2-已成交
             goodsMapper.update(updateGoods);
-            return; // 荷兰式直接返回，不执行后面的通用逻辑
+            return; 
+
+        } else if (goods.getAuctionType() == 3) {
+            // 密封式拍卖：每人只能出价一次
+            // 关键校验：查询该用户是否已对该商品出过价
+            Bid existingBid = bidMapper.selectByGoodsIdAndUser(bid.getGoodsId(), bid.getUserAccount());
+            if (existingBid != null) {
+                throw new CustomException("500", "密封拍卖每人限出价一次，您已提交过出价");
+            }
         }
 
         // 英式拍卖插入记录

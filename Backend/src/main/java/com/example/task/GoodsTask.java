@@ -110,19 +110,39 @@ public class GoodsTask {
                 } else if (goods.getAuctionType() != null && goods.getAuctionType() == 3) {
                     // 密封式拍卖：结算逻辑
                     List<com.example.entity.Bid> bids = bidMapper.selectByGoodsId(goods.getId());
-                    if (!bids.isEmpty()) {
-                        // 简单起见，这里先标记为成交，具体的订单生成和赢家确定可以放在 OrderService 处理
-                        updateGoods.setStatus(2);
-                        try {
-                            orderService.createOrder(goods.getId());
-                            System.out.println("密封式商品 [" + goods.getName() + "] 已成交，订单已生成。");
-                        } catch (Exception e) {
-                            System.err.println("密封式订单生成失败: " + e.getMessage());
-                            updateGoods.setStatus(3); // 失败则流拍
-                        }
-                    } else {
-                        updateGoods.setStatus(3);
+                    
+                    if (bids.isEmpty()) {
+                        updateGoods.setStatus(3); // 流拍
                         System.out.println("密封式商品 [" + goods.getName() + "] 无人出价，已流拍！");
+                    } else {
+                        // 1. 按出价金额降序排序
+                        bids.sort((a, b) -> b.getPrice().compareTo(a.getPrice()));
+                        
+                        com.example.entity.Bid winner = bids.get(0);
+                        BigDecimal finalPrice;
+
+                        // 2. 确定成交价（二价密封：取第二高的价格；如果只有一人，则取起拍价或保留价）
+                        if (bids.size() > 1) {
+                            finalPrice = bids.get(1).getPrice(); 
+                        } else {
+                            finalPrice = winner.getPrice(); // 只有一人时，按他的出价算（或者按保留价，看你怎么定义）
+                        }
+
+                        // 3. 核心校验：成交价是否达到保留价
+                        if (finalPrice.compareTo(goods.getReservePrice()) < 0) {
+                            updateGoods.setStatus(3); // 流拍
+                            System.out.println("密封式商品 [" + goods.getName() + "] 最高出价未达保留价，已流拍！");
+                        } else {
+                            // 4. 生成订单
+                            try {
+                                orderService.createOrder(goods.getId(), winner.getUserAccount(), finalPrice);
+                                updateGoods.setStatus(2); // 已成交
+                                System.out.println("密封式商品 [" + goods.getName() + "] 已成交。中标者: " + winner.getUserAccount() + ", 成交价: " + finalPrice);
+                            } catch (Exception e) {
+                                updateGoods.setStatus(3);
+                                System.err.println("密封式订单生成失败: " + e.getMessage());
+                            }
+                        }
                     }
                 } else {
                     // 英式拍卖：原有逻辑

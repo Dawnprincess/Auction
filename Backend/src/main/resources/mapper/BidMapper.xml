@@ -13,4 +13,8 @@
         ORDER BY create_time DESC
     </select>
 
+    <select id="selectByGoodsIdAndUser" resultType="com.example.entity.Bid">
+        SELECT * FROM bid WHERE goods_id = #{goodsId} AND user_account = #{userAccount} LIMIT 1
+    </select>
+
 </mapper>
