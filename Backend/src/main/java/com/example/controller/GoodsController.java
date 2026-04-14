@@ -5,6 +5,10 @@ import com.example.entity.Goods;
 import com.example.service.GoodsService;
 import com.github.pagehelper.PageInfo;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
+import cn.hutool.json.JSONUtil;
+import com.example.entity.Account;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,11 +43,23 @@ public class GoodsController {
     }
 
     /**
-     * 更新商品（包括审核通过、下架、修改信息）
+     * 更新商品
      */
     @PutMapping("/update")
-    public Result update(@RequestBody Goods goods) {
-        goodsService.update(goods);
+    public Result update(@RequestBody Goods goods, HttpServletRequest request) {
+        // 1. 获取当前操作人信息
+        String userHeader = request.getHeader("X-User-Info");
+        String operatorAccount = "";
+        boolean isAdmin = false;
+
+        if (userHeader != null) {
+            Account user = JSONUtil.toBean(userHeader, Account.class);
+            operatorAccount = user.getAccount();
+            isAdmin = (user.getAccessId() == 0); // 假设 0 是管理员
+        }
+
+        // 2. 调用 Service 进行带权限的更新
+        goodsService.update(goods, operatorAccount, isAdmin);
         return Result.success();
     }
 

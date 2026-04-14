@@ -113,33 +113,79 @@ public class GoodsService {
     }
 
     /**
-     * 更新商品（同样需要校验）
+     * 更新商品（包含权限校验和业务规则校验）
+     * @param goods 前端传来的修改数据
+     * @param operatorAccount 当前操作人的账号（从 Header 或 Token 中获取）
+     * @param isAdmin 当前操作人是否是管理员
      */
-    public void update(Goods goods) {
-        // 如果更新了价格或时间，建议再次执行上述校验逻辑
-        if (goods.getStartTime() != null && goods.getEndTime() != null) {
-             if (!goods.getEndTime().isAfter(goods.getStartTime())) {
-                throw new CustomException("500", "拍卖结束时间必须晚于开始时间");
+    public void update(Goods goods, String operatorAccount, boolean isAdmin) {
+        // 1. 获取数据库中的原始数据
+        Goods oldGoods = selectById(goods.getId());
+        if (oldGoods == null) {
+            throw new CustomException("500", "商品不存在");
+        }
+
+        // 2. 权限校验：非管理员只能修改自己的商品
+        if (!isAdmin && !oldGoods.getUserAccount().equals(operatorAccount)) {
+            throw new CustomException("403", "无权修改他人的商品");
+        }
+
+        // 3. 状态机校验：普通用户只能修改“待审核(0)”或“即将上架(4)”的商品
+        if (!isAdmin) {
+            if (oldGoods.getStatus() != 0 && oldGoods.getStatus() != 4) {
+                throw new CustomException("500", "拍卖已开始或已结束，无法修改商品信息");
+            }
+            
+            // 【核心修改】如果用户修改了“即将上架”的商品，强制重置为“待审核”
+            if (oldGoods.getStatus() == 4) {
+                goods.setStatus(0); 
+                System.out.println("用户修改了已审核商品 [" + oldGoods.getName() + "]，状态已重置为待审核");
+            }
+        }
+
+        // 4. 字段级保护：防止用户通过接口篡改不该改的字段
+        if (!isAdmin) {
+            // 用户不能手动修改当前价、创建时间等
+            goods.setCurrentPrice(null); 
+            goods.setCreateTime(null);
+            // 注意：status 已经在上面根据逻辑设置了，这里不再置 null
+            
+            // 如果用户没传某些字段，保留旧值（MyBatis 动态 SQL 会处理 null 不更新）
+            if (goods.getName() == null) goods.setName(oldGoods.getName());
+            if (goods.getIntro() == null) goods.setIntro(oldGoods.getIntro());
+            if (goods.getStartTime() == null) goods.setStartTime(oldGoods.getStartTime());
+            if (goods.getEndTime() == null) goods.setEndTime(oldGoods.getEndTime());
+        }
+
+        // 5. 业务逻辑校验（复用 add 中的部分逻辑，但要根据状态调整）
+        if (goods.getStartPrice() != null && goods.getReservePrice() != null) {
+            int type = goods.getAuctionType() != null ? goods.getAuctionType() : oldGoods.getAuctionType();
+            if (type == 1 || type == 3) {
+                if (goods.getReservePrice().compareTo(goods.getStartPrice()) < 0) {
+                    throw new CustomException("500", "保留价不能低于起拍价");
+                }
+            } else if (type == 2) {
+                if (goods.getStartPrice().compareTo(goods.getReservePrice()) < 0) {
+                    throw new CustomException("500", "荷兰式拍卖起拍价不能低于保留价");
+                }
             }
         }
         
-        if (goods.getUserAccount() != null && !goods.getUserAccount().isEmpty()) {
-            User user = userMapper.selectByAccount(goods.getUserAccount());
-            if (user == null) {
-                throw new CustomException("500", "拍卖人账号不存在");
-            }
+        // 密封式拍卖梯度强制归零
+        if (goods.getAuctionType() != null && goods.getAuctionType() == 3) {
+            goods.setPriceChange(BigDecimal.ZERO);
         }
-        // 获取更新前的商品信息
-        Goods oldGoods = selectById(goods.getId());
-        // 如果有新的头像且与旧头像不同，则删除旧头像
-        if (oldGoods != null && oldGoods.getImageUrl() != null &&
-                goods.getImageUrl() != null && !oldGoods.getImageUrl().equals(goods.getImageUrl())) {
+
+        // 6. 处理图片删除逻辑（如果换了新图，删旧图）
+        if (oldGoods.getImageUrl() != null && goods.getImageUrl() != null && 
+                !oldGoods.getImageUrl().equals(goods.getImageUrl())) {
             String oldFileName = fileService.extractFileNameFromUrl(oldGoods.getImageUrl());
             if (oldFileName != null) {
-                String filePath = System.getProperty("user.dir") + "/files/goods/" + oldFileName;
-                FileUtil.del(filePath);
+                FileUtil.del(System.getProperty("user.dir") + "/files/goods/" + oldFileName);
             }
         }
+
+        // 7. 执行更新
         goodsMapper.update(goods);
     }
 

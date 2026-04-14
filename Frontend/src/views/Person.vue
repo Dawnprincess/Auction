@@ -89,12 +89,49 @@
                  <img :src="scope.row.imageUrl" style="width: 50px; height: 50px; object-fit: cover;" />
                </template>
             </el-table-column>
-            <el-table-column label="操作" width="100">
+            <el-table-column label="操作" width="150">
               <template #default="scope">
-                <el-button size="small" @click="handleDetail(scope.row.id)">详情</el-button>
+                <el-button size="small" @click="openEditDialog(scope.row)">详情/编辑</el-button>
               </template>
             </el-table-column>
           </el-table>
+          <!-- 商品详情/编辑弹窗 -->
+          <el-dialog v-model="editDialogVisible" title="商品详情与修改" width="600px">
+            <el-form :model="editForm" label-width="100px">
+              <el-form-item label="商品名称">
+                <el-input v-model="editForm.name" />
+              </el-form-item>
+              <el-form-item label="商品介绍">
+                <el-input v-model="editForm.intro" type="textarea" :rows="3" />
+              </el-form-item>
+              <el-form-item label="开始时间">
+                <el-date-picker v-model="editForm.startTime" type="datetime" placeholder="选择开始时间" style="width: 100%" />
+              </el-form-item>
+              <el-form-item label="结束时间">
+                <el-date-picker v-model="editForm.endTime" type="datetime" placeholder="选择结束时间" style="width: 100%" />
+              </el-form-item>
+
+              <!-- 展示一些不可修改的信息 -->
+              <el-descriptions :column="2" border size="small" style="margin-top: 20px;">
+                <el-descriptions-item label="起拍价">¥{{ editForm.startPrice }}</el-descriptions-item>
+                <el-descriptions-item label="当前价">¥{{ editForm.currentPrice }}</el-descriptions-item>
+                <el-descriptions-item label="拍卖类型">
+                  {{ editForm.auctionType === 1 ? '英式' : (editForm.auctionType === 2 ? '荷兰式' : '密封式') }}
+                </el-descriptions-item>
+                <el-descriptions-item label="状态">
+                  <el-tag v-if="editForm.status === 0" type="warning">待审核</el-tag>
+                  <el-tag v-else-if="editForm.status === 4" type="primary">即将上架</el-tag>
+                  <el-tag v-else type="info">{{ editForm.status === 1 ? '拍卖中' : '已结束' }}</el-tag>
+                </el-descriptions-item>
+              </el-descriptions>
+            </el-form>
+            <template #footer>
+              <el-button @click="editDialogVisible = false">关闭</el-button>
+              <el-button type="primary" @click="handleSaveEdit" :disabled="editForm.status !== 0 && editForm.status !== 4">
+                保存修改
+              </el-button>
+            </template>
+          </el-dialog>
         </el-tab-pane>
 
         <el-tab-pane v-if="data.user.accessId === 1" label="我的订单" name="myOrders">
@@ -356,6 +393,60 @@ watch(activeTab, (newVal) => {
     loadMyOrders();
   }
 });
+
+const editDialogVisible = ref(false);
+const editForm = ref({});
+
+const openEditDialog = (row) => {
+  editForm.value = { ...row };
+  editDialogVisible.value = true;
+};
+
+const handleSaveEdit = () => {
+  // 1. 时间格式化处理（仿照 Publish.vue）
+  const formData = { ...editForm.value };
+
+  if (formData.startTime) {
+    const start = new Date(formData.startTime);
+    formData.startTime = start.getFullYear() + '-' +
+      String(start.getMonth() + 1).padStart(2, '0') + '-' +
+      String(start.getDate()).padStart(2, '0') + ' ' +
+      String(start.getHours()).padStart(2, '0') + ':' +
+      String(start.getMinutes()).padStart(2, '0') + ':' +
+      String(start.getSeconds()).padStart(2, '0');
+  }
+
+  if (formData.endTime) {
+    const end = new Date(formData.endTime);
+    formData.endTime = end.getFullYear() + '-' +
+      String(end.getMonth() + 1).padStart(2, '0') + '-' +
+      String(end.getDate()).padStart(2, '0') + ' ' +
+      String(end.getHours()).padStart(2, '0') + ':' +
+      String(end.getMinutes()).padStart(2, '0') + ':' +
+      String(end.getSeconds()).padStart(2, '0');
+
+    // 简单校验
+    if (formData.startTime && new Date(formData.endTime) <= new Date(formData.startTime)) {
+      ElMessage.error("结束时间必须晚于开始时间");
+      return;
+    }
+  }
+
+  // 2. 直接复用 update 接口，后端会自动处理权限、状态回退和字段过滤
+  request.put("/goods/update", formData).then(res => {
+    if (res.code === '200') {
+      ElMessage.success("修改成功");
+      if (editForm.value.status === 4) {
+        ElMessage.info("注意：商品已重新进入待审核状态");
+      }
+      editDialogVisible.value = false;
+      loadMyGoods();
+    } else {
+      ElMessage.error(res.msg);
+    }
+  });
+};
+
 </script>
 
 <style scoped>
