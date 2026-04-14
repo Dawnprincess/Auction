@@ -74,4 +74,8 @@ public class OrderService {
         orderMapper.update(order);
     }
 
+    public Order selectByGoodsId(Integer goodsId) {
+        return orderMapper.selectByGoodsId(goodsId);
+    }
+
 }

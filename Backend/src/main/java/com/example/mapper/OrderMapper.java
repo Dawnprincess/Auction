@@ -14,5 +14,8 @@ public interface OrderMapper {
     List<Order> selectBySellerAccount(String sellerAccount);
 
     void update(Order order);
-
+    /**
+     * 根据商品ID查询订单
+     */
+    Order selectByGoodsId(Integer goodsId);
 }

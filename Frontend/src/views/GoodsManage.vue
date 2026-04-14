@@ -30,13 +30,33 @@
       </el-table-column>
       <el-table-column prop="startTime" label="开始时间" width="180"></el-table-column>
       <el-table-column prop="endTime" label="结束时间" width="180"></el-table-column>
-      <el-table-column label="操作" width="250" fixed="right">
+      <el-table-column label="操作" width="200">
         <template #default="scope">
-          <el-button v-if="scope.row.status === 0" size="small" type="success" @click="handleCheck(scope.row, 4)">通过</el-button>
-          <el-button v-if="scope.row.status === 0" size="small" type="danger" @click="handleCheck(scope.row, 3)">驳回</el-button>
-
+          <!-- 基础操作 -->
           <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
           <el-button size="small" type="danger" @click="handleDelete(scope.row.id)">删除</el-button>
+
+          <!-- 竞价记录：拍卖中、已成交、流拍都可以看 -->
+          <el-button
+            v-if="[1, 2, 3].includes(scope.row.status)"
+            size="small"
+            type="primary"
+            plain
+            @click="openBidDialog(scope.row.id)"
+          >
+            竞价记录
+          </el-button>
+
+          <!-- 订单详情：只有已成交才能看 -->
+          <el-button
+            v-if="scope.row.status === 2"
+            size="small"
+            type="success"
+            plain
+            @click="openOrderDialog(scope.row.id)"
+          >
+            查看订单
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -122,6 +142,34 @@
       </template>
     </el-dialog>
   </div>
+  <!-- 竞价记录弹窗 -->
+<el-dialog v-model="bidDialogVisible" title="竞价历史记录" width="60%">
+  <el-table :data="bidList" border stripe>
+    <el-table-column prop="userAccount" label="出价人账号"></el-table-column>
+    <el-table-column prop="price" label="出价金额">
+      <template #default="scope"><span style="color: #f56c6c;">¥{{ scope.row.price }}</span></template>
+    </el-table-column>
+    <el-table-column prop="bidTime" label="出价时间">
+      <template #default="scope">{{ formatTime(scope.row.createTime) }}</template>
+    </el-table-column>
+  </el-table>
+</el-dialog>
+
+<!-- 订单详情弹窗 -->
+<el-dialog v-model="orderDialogVisible" title="成交订单详情" width="50%">
+  <el-descriptions :column="1" border v-if="currentOrder">
+    <el-descriptions-item label="订单号">{{ currentOrder.orderNo }}</el-descriptions-item>
+    <el-descriptions-item label="买家账号">{{ currentOrder.buyerAccount }}</el-descriptions-item>
+    <el-descriptions-item label="成交价格">¥{{ currentOrder.price }}</el-descriptions-item>
+    <el-descriptions-item label="支付状态">
+      <el-tag :type="currentOrder.status === 1 ? 'success' : 'warning'">
+        {{ currentOrder.status === 1 ? '已支付' : '待支付' }}
+      </el-tag>
+    </el-descriptions-item>
+    <el-descriptions-item label="创建时间">{{ formatTime(currentOrder.createTime) }}</el-descriptions-item>
+  </el-descriptions>
+</el-dialog>
+
 </template>
 
 <script setup>
@@ -139,6 +187,11 @@ const total = ref(0);
 const dialogVisible = ref(false);
 
 const formRef = ref()
+// 【新增】竞价与订单相关的响应式变量
+const bidDialogVisible = ref(false);
+const orderDialogVisible = ref(false);
+const bidList = ref([]);
+const currentOrder = ref(null);
 
 const data = reactive({
   form: {
@@ -153,6 +206,36 @@ const data = reactive({
     ],
   }
 });
+
+// 格式化时间工具函数
+const formatTime = (time) => {
+  if (!time) return '';
+  return time.replace('T', ' ').substring(0, 19);
+};
+
+// 打开竞价弹窗
+const openBidDialog = (goodsId) => {
+  request.get(`/bid/list/${goodsId}`).then(res => {
+    if (res.code === '200') {
+      bidList.value = res.data;
+      bidDialogVisible.value = true;
+    } else {
+      ElMessage.error(res.msg);
+    }
+  });
+};
+
+// 打开订单弹窗
+const openOrderDialog = (goodsId) => {
+  request.get("/order/detail", { params: { goodsId } }).then(res => {
+    if (res.code === '200') {
+      currentOrder.value = res.data;
+      orderDialogVisible.value = true;
+    } else {
+      ElMessage.error(res.msg || "未找到相关订单");
+    }
+  });
+};
 
 const handleImageChange = (file) => {
   if (file.size / 1024 > 1024) {

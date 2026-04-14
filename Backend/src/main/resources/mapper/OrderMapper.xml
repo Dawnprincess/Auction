@@ -23,4 +23,8 @@
         WHERE id = #{id}
     </update>
 
+    <select id="selectByGoodsId" resultType="com.example.entity.Order">
+        select * from orders where goods_id = #{goodsId}
+    </select>
+
 </mapper>

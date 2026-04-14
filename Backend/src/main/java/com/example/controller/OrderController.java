@@ -40,4 +40,19 @@ public class OrderController {
         orderService.updateOrder(order); 
         return Result.success();
     }
+
+    /**
+     * 根据商品ID查询订单详情（管理员查看用）
+     */
+    @GetMapping("/detail")
+    public Result getDetail(Integer goodsId) {
+        if (goodsId == null) {
+            return Result.error("400", "商品ID不能为空");
+        }
+        Order order = orderService.selectByGoodsId(goodsId);
+        if (order == null) {
+            return Result.error("404", "该商品暂无成交订单");
+        }
+        return Result.success(order);
+    }
 }

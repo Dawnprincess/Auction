@@ -86,9 +86,9 @@ public class GoodsController {
     @GetMapping("/list")
     public Result list(Goods goods) {
         // 默认只查询 status = 1 (拍卖中) 的商品
-        if (goods.getStatus() == null) {
-            goods.setStatus(1);
-        }
+//        if (goods.getStatus() == null) {
+//            goods.setStatus(1);
+//        }
         List<Goods> list = goodsService.selectAll(goods);
         return Result.success(list);
     }
