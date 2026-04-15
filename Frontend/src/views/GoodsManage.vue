@@ -30,33 +30,25 @@
       </el-table-column>
       <el-table-column prop="startTime" label="开始时间" width="180"></el-table-column>
       <el-table-column prop="endTime" label="结束时间" width="180"></el-table-column>
-      <el-table-column label="操作" width="200">
+      <el-table-column label="操作" width="180" align="center">
         <template #default="scope">
-          <!-- 基础操作 -->
-          <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button size="small" type="danger" @click="handleDelete(scope.row.id)">删除</el-button>
+          <el-tooltip content="编辑" placement="top">
+            <el-button link type="primary" :icon="Edit" @click="handleEdit(scope.row)" />
+          </el-tooltip>
 
-          <!-- 竞价记录：拍卖中、已成交、流拍都可以看 -->
-          <el-button
-            v-if="[1, 2, 3].includes(scope.row.status)"
-            size="small"
-            type="primary"
-            plain
-            @click="openBidDialog(scope.row.id)"
-          >
-            竞价记录
-          </el-button>
+          <el-tooltip content="删除" placement="top">
+            <el-button link type="danger" :icon="Delete" @click="handleDelete(scope.row.id)" />
+          </el-tooltip>
 
-          <!-- 订单详情：只有已成交才能看 -->
-          <el-button
-            v-if="scope.row.status === 2"
-            size="small"
-            type="success"
-            plain
-            @click="openOrderDialog(scope.row.id)"
-          >
-            查看订单
-          </el-button>
+          <!-- 竞价记录 -->
+          <el-tooltip v-if="[1, 2, 3].includes(scope.row.status)" content="查看竞价" placement="top">
+            <el-button link type="warning" :icon="TrendCharts" @click="openBidDialog(scope.row.id)" />
+          </el-tooltip>
+
+          <!-- 订单详情 -->
+          <el-tooltip v-if="scope.row.status === 2" content="查看订单" placement="top">
+            <el-button link type="success" :icon="Document" @click="openOrderDialog(scope.row.id)" />
+          </el-tooltip>
         </template>
       </el-table-column>
     </el-table>
@@ -173,6 +165,7 @@
 </template>
 
 <script setup>
+import { Edit, Delete, TrendCharts, Document } from '@element-plus/icons-vue';
 import { ref, reactive } from "vue";
 import request from "@/utils/request.js";
 import { ElMessage, ElMessageBox } from "element-plus";
