@@ -67,8 +67,8 @@ public class GoodsTask {
                         newPrice = goods.getReservePrice();
                     }
 
-                    // 只有当计算出的价格与当前存储价格不同时才更新数据库
-                    if (newPrice.compareTo(goods.getCurrentPrice()) != 0) {
+                    // 只有当计算出的价格与当前存储价格不同，并且正在拍卖时才更新数据库
+                    if (newPrice.compareTo(goods.getCurrentPrice()) != 0 && (goods.getStatus() == 1)) {
                         Goods updateGoods = new Goods();
                         updateGoods.setId(goods.getId());
                         updateGoods.setCurrentPrice(newPrice);

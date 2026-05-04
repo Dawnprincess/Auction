@@ -70,6 +70,15 @@
 
         <el-form-item label="起拍价"><el-input-number v-model="data.form.startPrice"></el-input-number></el-form-item>
         <el-form-item label="保留价"><el-input-number v-model="data.form.reservePrice"></el-input-number></el-form-item>
+
+        <!-- 【新增】当前价修改项 -->
+        <el-form-item label="当前价">
+          <el-input-number v-model="data.form.currentPrice" :precision="2"></el-input-number>
+          <span style="font-size: 12px; color: #999; margin-left: 10px;">
+            (仅英式/密封式有效，荷兰式会被自动重置)
+          </span>
+        </el-form-item>
+
         <el-form-item label="开始时间">
           <el-date-picker v-model="data.form.startTime" type="datetime" placeholder="选择开始时间"/>
         </el-form-item>

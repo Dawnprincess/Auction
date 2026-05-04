@@ -49,39 +49,44 @@
             </template>
           </div>
 
-          <!-- 倒计时 -->
-          <div style="text-align: center; margin-bottom: 20px;">
-            <div v-if="countdownText" :style="{ fontSize: '32px', fontWeight: 'bold', color: countdownColor }">
-              {{ countdownText }}
-            </div>
-            <div v-else style="font-size: 24px; color: #999;">拍卖已结束</div>
+          <!-- 【新增】拍卖倒计时 -->
+          <div v-if="countdownText" style="text-align: center; margin-bottom: 20px; padding: 15px; background: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px;">
+            <span style="color: #faad14; font-size: 14px; margin-right: 10px;">⏳ 距离结束还剩：</span>
+            <span :style="{ color: countdownColor, fontSize: '20px', fontWeight: 'bold' }">{{ countdownText }}</span>
           </div>
 
-          <!-- 出价区域 -->
+          <!-- 保证金状态卡片 -->
+          <el-card v-if="canBid" shadow="never" style="margin-bottom: 20px; background: #f9fafc;">
+            <div v-if="hasPaidDeposit" style="display: flex; align-items: center; gap: 10px;">
+              <el-tag type="success" size="large">✅ 已获竞拍资格</el-tag>
+              <span style="font-weight: bold; color: #409eff;">您的竞拍号: {{ myBidderCode }}</span>
+            </div>
+            <div v-else style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: #666;">参与竞拍需缴纳保证金</span>
+              <el-button type="warning" :loading="paying" @click="handlePayDeposit">
+                缴纳保证金 (¥100)
+              </el-button>
+            </div>
+          </el-card>
+
+          <!-- 英式:出价输入框 (未缴纳时禁用) -->
           <div v-if="canBid && goods.auctionType !== 2" style="display: flex; gap: 10px; margin-bottom: 20px;">
             <el-input-number
               v-model="bidPrice"
               :min="minBidPrice"
               :step="goods.priceChange || 1"
-              :precision="2"
-              :disabled="hasUserBid"
+              :disabled="!hasPaidDeposit || (goods.auctionType === 3 && hasUserBid)"
               style="flex: 1;"
             />
-            <el-button
-              type="danger"
-              size="large"
-              @click="handleBid"
-              :loading="bidding"
-              :disabled="hasUserBid"
-            >
-              {{ hasUserBid ? '您已出价' : (goods.auctionType === 3 ? '提交密封出价' : '立即出价') }}
+            <el-button type="primary" :disabled="!hasPaidDeposit" :loading="bidding" @click="handleBid">
+              {{ (goods.auctionType === 3 && hasUserBid) ? '已出价' : '提交出价' }}
             </el-button>
           </div>
 
-          <!-- 荷兰式拍卖购买区域 -->
+          <!-- 荷兰式:购买区域 -->
           <div v-else-if="goods.auctionType === 2 && canBid" style="margin-bottom: 20px;">
              <el-alert title="荷兰式拍卖：价格随时间递减，先到先得" type="warning" :closable="false" style="margin-bottom: 10px;" />
-             <el-button type="danger" size="large" style="width: 100%;" @click="handleBuyNow">
+             <el-button type="danger" size="large" style="width: 100%;" :disabled="!hasPaidDeposit" @click="handleBuyNow">
                以当前价 ¥{{ goods.currentPrice }} 立即购买
              </el-button>
           </div>
@@ -120,7 +125,14 @@
       </template>
 
       <el-table :data="bidList" border stripe v-if="bidList.length > 0">
-        <el-table-column prop="userAccount" label="出价人" width="120"></el-table-column>
+        <!-- 【修改点】显示竞拍号，如果是自己则显示“我” -->
+        <el-table-column label="出价人" width="120">
+          <template #default="scope">
+            <span v-if="scope.row.isMe" style="color: #409eff; font-weight: bold;">{{ scope.row.bidderCode }} (我)</span>
+            <span v-else>{{ scope.row.bidderCode || '匿名买家' }}</span>
+          </template>
+        </el-table-column>
+
         <el-table-column prop="price" label="出价金额" width="150">
           <template #default="scope">
             <span style="color: #f56c6c; font-weight: bold;">¥{{ scope.row.price }}</span>
@@ -142,7 +154,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import request from '@/utils/request.js';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import defaultImageSrc from '@/assets/very_sorry.png';
 
 const route = useRoute();
@@ -150,11 +162,17 @@ const goodsId = route.params.id;
 
 const goods = ref({});
 const bidList = ref([]);
-const bidPrice = ref(0); // 这个变量只受用户控制和初始化控制，不受轮询影响
+const bidPrice = ref(0);
 const bidding = ref(false);
 const countdownText = ref('');
 const countdownColor = ref('#333');
 const defaultImage = defaultImageSrc;
+
+//保证金相关的响应式变量
+const hasPaidDeposit = ref(false);
+const myBidderCode = ref('');
+const paying = ref(false);
+
 let timer = null;
 
 // 计算属性：判断当前用户是否已经出过价
@@ -206,9 +224,27 @@ const loadGoodsDetail = () => {
 
 // 加载出价记录
 const loadBidList = () => {
+  const user = JSON.parse(localStorage.getItem('user'));
   request.get(`/bid/list/${goodsId}`).then(res => {
     if (res.code === '200') {
-      bidList.value = res.data;
+      bidList.value = res.data.map(bid => ({
+        ...bid,
+        isMe: bid.userAccount === user.account
+      }));
+
+      // 1. 先尝试从出价记录里找竞拍号
+      let myBid = bidList.value.find(b => b.isMe);
+
+      // 2. 如果出价记录里没找到（比如还没出价，只交了保证金），我们需要额外检查
+      if (!myBid && hasPaidDeposit.value) {
+        // 如果前端之前已经知道交过了，就保留状态，防止轮询冲刷
+        return;
+      }
+
+      if (myBid && myBid.bidderCode) {
+        hasPaidDeposit.value = true;
+        myBidderCode.value = myBid.bidderCode;
+      }
     }
   });
 };
@@ -319,7 +355,49 @@ const handleBuyNow = () => {
   });
 };
 
+// 缴纳保证金
+const handlePayDeposit = () => {
+  ElMessageBox.confirm('需缴纳保证金 ¥100，模拟支付将立即扣除', '提示').then(() => {
+    paying.value = true;
+    // 确保 goodsId 是数字类型
+    request.post('/bid/deposit', { goodsId: Number(goodsId) }).then(res => {
+      console.log("后端返回结果:", res); // 【调试日志】
+
+      if (res.code === '200' || res.code === 200) {
+        const code = res.data;
+        if (!code) {
+          ElMessage.error("未获取到竞拍号，请检查后端日志");
+          return;
+        }
+        ElMessage.success(`缴纳成功！您的竞拍号为：${code}`);
+
+        // 【核心修复】不仅更新变量，还存入本地缓存，防止刷新丢失
+        myBidderCode.value = code;
+        hasPaidDeposit.value = true;
+        localStorage.setItem(`deposit_${goodsId}`, code);
+
+        loadBidList();
+      } else {
+        ElMessage.error(res.msg || "缴纳失败");
+      }
+    }).catch(err => {
+      console.error("网络错误:", err);
+      ElMessage.error("网络请求异常");
+    }).finally(() => {
+      paying.value = false;
+    });
+  });
+};
+
 onMounted(() => {
+  // 1. 恢复保证金状态
+  const cachedCode = localStorage.getItem(`deposit_${goodsId}`);
+  if (cachedCode) {
+    hasPaidDeposit.value = true;
+    myBidderCode.value = cachedCode;
+  }
+
+  // 2. 加载其他数据
   loadGoodsDetail();
   loadBidList();
 

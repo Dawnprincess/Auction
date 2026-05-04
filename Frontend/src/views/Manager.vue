@@ -24,10 +24,12 @@
 
         <!-- 管理员专属菜单 -->
         <template v-if="data.user.accessId === 0">
+          <!--
           <el-menu-item index="/manager/data">
             <el-icon><DataAnalysis /></el-icon>
             数据统计
           </el-menu-item>
+          -->
           <el-sub-menu index="1">
             <template #title>
               <el-icon><User /></el-icon>

@@ -14,4 +14,6 @@ public interface BidMapper {
     List<Bid> selectByGoodsId(Integer goodsId);
 
     Bid selectByGoodsIdAndUser(@Param("goodsId") Integer goodsId, @Param("userAccount") String userAccount);
+
+    void update(Bid bid);
 }
