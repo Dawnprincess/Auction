@@ -4,16 +4,21 @@
       <div style="padding: 20px; background-color: white; margin-bottom: 20px; border-radius: 20px;">
         <el-form ref="formRef" :model="data.form" :rules="data.rules" style="width: 330px">
           <div style="text-align: center; font-size: 24px;color: #0777e6; font-weight: bold">登录</div>
-          <el-form-item prop="account">
-            <el-input size="large" v-model="data.form.account" autocomplete="off" placeholder="请输入账号" prefix-icon="User"></el-input>
+          <el-form-item prop="account" style="width: 100%" size=large>
+            <!-- 【修改点】增加 @input 事件监听 -->
+            <el-input v-model="data.form.account" placeholder="请输入账号" @input="handleAccountInput">
+              <template #prefix>
+                <el-icon><User /></el-icon>
+              </template>
+            </el-input>
           </el-form-item>
           <el-form-item prop="password">
             <el-input size="large" v-model="data.form.password" autocomplete="off" placeholder="请输入密码" prefix-icon="Lock" show-password></el-input>
           </el-form-item>
           <el-form-item style="width: 100%" size=large>
-            <el-select v-model="data.form.accessId">
-              <el-option :value = "0" label = "管理员"></el-option>
-              <el-option :value = "1" label = "用户"></el-option>
+            <el-select v-model="data.form.accessId" style="width: 100%">
+              <el-option :value="0" label="管理员"></el-option>
+              <el-option :value="1" label="用户"></el-option>
             </el-select>
           </el-form-item>
           <div>
@@ -72,6 +77,22 @@ const login = () => {
     }
   })
 }
+
+// 【新增】根据账号首字符自动选择身份
+const handleAccountInput = (val) => {
+  // 如果输入框为空，默认重置为用户身份 (1)
+  if (!val || val.toString().trim() === '') {
+    data.form.accessId = 1;
+    return;
+  }
+
+  const firstChar = val.toString().charAt(0);
+  if (firstChar === '1') {
+    data.form.accessId = 1; // 自动选用户
+  } else if (firstChar === '0') {
+    data.form.accessId = 0; // 自动选管理员
+  }
+};
 
 </script>
 

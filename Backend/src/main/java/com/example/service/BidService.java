@@ -26,6 +26,9 @@ public class BidService {
     @Resource
     private OrderService orderService; // 注入订单服务
 
+    @Resource
+    private MessageService messageService;
+
     /**
      * 提交出价（包含事务）
      */
@@ -62,6 +65,18 @@ public class BidService {
             goodsMapper.update(updateGoods);
             // 英式拍卖插入记录
             bidMapper.insert(bid);
+
+            //通知上一个出价人
+            List<Bid> allBids = bidMapper.selectByGoodsId(goods.getId());
+            if (!allBids.isEmpty()) {
+                Bid lastBid = allBids.get(1);
+                // 如果上一条出价不是同一个人，说明他被超越了
+                if (!lastBid.getUserAccount().equals(bid.getUserAccount())) {
+                    messageService.sendMessage(lastBid.getUserAccount(), "竞拍提醒",
+                            String.format("您关注的商品 [%s] 当前价已被超越，请前往【商品详情】及时加价！", goods.getName()),
+                            1, goods.getId());
+                }
+            }
             
         } else if (goods.getAuctionType() == 2) {
             // --- 荷兰式拍卖：立即购买 ---

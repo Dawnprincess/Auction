@@ -1,9 +1,11 @@
 package com.example.service;
 
 import cn.hutool.core.io.FileUtil;
+import com.example.entity.Admin;
 import com.example.entity.Goods;
 import com.example.entity.User;
 import com.example.exception.CustomException;
+import com.example.mapper.AdminMapper;
 import com.example.mapper.GoodsMapper;
 import com.example.mapper.UserMapper;
 import com.github.pagehelper.PageHelper;
@@ -25,7 +27,13 @@ public class GoodsService {
     private UserMapper userMapper;
 
     @Resource
+    private AdminMapper adminMapper;
+
+    @Resource
     private FileService fileService;
+
+    @Resource
+    private MessageService messageService;
 
     /**
      * 新增商品（包含数据校验）
@@ -110,6 +118,14 @@ public class GoodsService {
         }
 
         goodsMapper.insert(goods);
+
+        // 【触发点】获取所有管理员并发送通知
+        List<Admin> admins = adminMapper.selectAll(null);
+        for (Admin admin : admins) {
+            messageService.sendMessage(admin.getAccount(), "新商品待审核",
+                    String.format("用户 [%s] 发布了新商品 [%s]，请及时前往【商品管理】审核。", goods.getUserAccount(), goods.getName()),
+                    0, goods.getId());
+        }
     }
 
     /**

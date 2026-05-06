@@ -194,6 +194,24 @@ import request from "@/utils/request.js";
 import {ElMessage, ElMessageBox} from "element-plus"; // 引入 ElMessageBox
 import { Plus } from '@element-plus/icons-vue';
 import router from "@/router/index.js";
+import {useRoute} from "vue-router";
+
+const route = useRoute()
+const activeName = ref('info');
+
+const checkRouteParams = () => {
+  const tab = route.query.tab;
+  if (tab) {
+    activeTab.value = tab;
+  }
+}
+
+
+onMounted(() => {
+  // ... 原有的初始化逻辑 ...
+  checkRouteParams(); // 页面加载时检查是否需要切换标签
+});
+
 
 const openPublishDialog = () => {
   router.push('/manager/publish')

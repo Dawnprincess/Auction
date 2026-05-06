@@ -23,6 +23,9 @@ public class GoodsTask {
     @Resource
     private com.example.service.OrderService orderService;
 
+    @Resource
+    private com.example.service.MessageService messageService;
+
     // 每隔 1 分钟执行一次 (cron 表达式: 秒 分 时 日 月 周)
     @Scheduled(cron = "0/5 * * * * ?")
     public void autoStartAuction() {
@@ -90,6 +93,7 @@ public class GoodsTask {
 
         for (Goods goods : goodsList) {
             if (goods.getEndTime() != null && !now.isBefore(goods.getEndTime())) {
+                Integer oldStatus = goods.getStatus(); // 记录旧状态
                 Goods updateGoods = new Goods();
                 updateGoods.setId(goods.getId());
                 
@@ -161,8 +165,45 @@ public class GoodsTask {
                         System.out.println("商品 [" + goods.getName() + "] 未达保留价，已流拍！");
                     }
                 }
-                
+
+                // 1. 更新商品状态
                 goodsMapper.update(updateGoods);
+
+                // 2. 【核心判断】只有当新状态不为空，且与旧状态不同时，才发消息
+                if (updateGoods.getStatus() != null && !updateGoods.getStatus().equals(oldStatus)) {
+                    handleAuctionMessage(goods, updateGoods.getStatus());
+                }
+            }
+        }
+    }
+
+    /**
+     * 统一处理拍卖结束后的消息通知
+     * @param goods 原始商品信息
+     * @param finalStatus 最终状态 (2:成交, 3:流拍)
+     */
+    private void handleAuctionMessage(Goods goods, Integer finalStatus) {
+        // 1. 通知卖家
+        String sellerTitle = finalStatus == 2 ? "商品售出通知" : "流拍通知";
+        String sellerContent = finalStatus == 2 
+            ? String.format("您的商品 [%s] 已成交，成交价 ¥%s。", goods.getName(), goods.getCurrentPrice())
+            : String.format("您的商品 [%s] 因未达保留价或无人出价已流拍。", goods.getName());
+        
+        messageService.sendMessage(goods.getUserAccount(), sellerTitle, sellerContent, 2, goods.getId());
+
+        // 2. 如果成交，通知买家
+        if (finalStatus == 2) {
+            // 查询最高出价人（这里需要根据不同拍卖类型去 bid 表查）
+            // 简单起见，我们可以查 bid 表里价格最高的那条
+            List<com.example.entity.Bid> bids = bidMapper.selectByGoodsId(goods.getId());
+            if (!bids.isEmpty()) {
+                // 按价格排序取最高
+                bids.sort((a, b) -> b.getPrice().compareTo(a.getPrice()));
+                com.example.entity.Bid winner = bids.get(0);
+                
+                messageService.sendMessage(winner.getUserAccount(), "竞拍成功通知", 
+                    String.format("恭喜！您已成功拍得 [%s]，请前往【我的订单】支付。", goods.getName()), 
+                    2, goods.getId());
             }
         }
     }

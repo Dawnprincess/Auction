@@ -8,6 +8,7 @@ const router = createRouter({
     {path: '/manager', name: 'Manager', meta: { title:'管理'}, component:() => import('../views/Manager.vue'), children:[
       {path: 'home', name: 'home', meta: { title:'主页'}, component: () => import('../views/Home.vue'),},
       {path: 'data', name: 'data', meta: { title:'数据展示'}, component: () => import('../views/Data.vue')},
+        {path: 'messages', name: 'messages', component: () => import('@/views/Message.vue'), meta: { requiresAuth: true }},
       {path: 'user', name:'user', meta: { title:'用户管理'}, component: () => import('../views/User.vue')},
       {path: 'admin', name:'admin', meta: { title:'管理员信息'}, component: () => import('../views/Admin.vue')},
         {path: 'goodsManage', name:'goodsManage', meta: { title:'商品管理'}, component: () => import('../views/GoodsManage.vue')},
