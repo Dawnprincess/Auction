@@ -65,9 +65,9 @@ const handleJump = (msg) => {
   if (msg.title.includes('待审核')) {
     // 管理员跳转到商品管理页，并可以自动筛选出该商品
     router.push({ path: '/manager/goodsManage', query: { id: msg.relatedId } });
-  } else if (msg.title.includes('被超越')) {
+  } else if (msg.title.includes('竞拍提醒')) {
     // 用户跳转到商品详情页继续竞拍
-    router.push(`/goodsDetail/${msg.relatedId}`);
+    router.push(`/manager/goodsDetail/${msg.relatedId}`);
   } else if (msg.title.includes('成功') || msg.title.includes('支付')) {
     // 买家跳转到个人中心-我的订单
     router.push({ path: '/manager/person', query: { tab: 'myOrders' }});

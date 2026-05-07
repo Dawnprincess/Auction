@@ -40,6 +40,11 @@ public class BidService {
             throw new CustomException("500", "商品不存在或不在拍卖中");
         }
 
+        // 【新增】禁止卖家对自己发布的商品出价
+        if (goods.getUserAccount().equals(bid.getUserAccount())) {
+            throw new CustomException("500", "您不能对自己发布的商品进行竞拍");
+        }
+
         // 2. 【核心逻辑】查找该用户在该商品下是否已有竞拍号
         Bid existingRecord = bidMapper.selectByGoodsIdAndUser(bid.getGoodsId(), bid.getUserAccount());
         
