@@ -6,6 +6,7 @@ import com.example.entity.Account;
 import com.example.entity.User;
 import com.example.exception.CustomException;
 import com.example.mapper.AdminMapper;
+import com.example.mapper.MessageMapper;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import jakarta.annotation.Resource;
@@ -21,6 +22,8 @@ public class AdminService {
     private AdminMapper adminMapper;
     @Resource
     private FileService fileService;
+    @Resource
+    private MessageMapper messageMapper;
 
     public void add(Admin admin) {
         String account=admin.getAccount();
@@ -70,6 +73,7 @@ public class AdminService {
                     FileUtil.del(filePath);
                 }
             }
+            messageMapper.deleteByReceiverAccount(admin.getAccount());
             adminMapper.deleteById(id);
         } else {
             // 用户不存在的情况下，可以选择抛出异常或记录日志

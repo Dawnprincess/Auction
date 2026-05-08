@@ -24,4 +24,8 @@
         update message set is_read = 1
         where receiver_account = #{account} and related_id = #{relatedId}
     </update>
+
+    <delete id="deleteByReceiverAccount">
+        delete from message where receiver_account = #{account}
+    </delete>
 </mapper>

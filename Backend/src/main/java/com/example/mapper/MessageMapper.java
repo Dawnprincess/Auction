@@ -21,4 +21,5 @@ public interface MessageMapper {
     // 【新增】标记某用户关于某商品的所有消息为已读（用于点击跳转后自动消除红点）
     void markRelatedAsRead(@Param("account") String account, @Param("relatedId") Integer relatedId);
 
+    void deleteByReceiverAccount(String account);
 }

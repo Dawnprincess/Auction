@@ -50,7 +50,7 @@
           </div>
 
           <!-- 【新增】拍卖倒计时 -->
-          <div v-if="countdownText" style="text-align: center; margin-bottom: 20px; padding: 15px; background: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px;">
+          <div v-if="goods.status === 1 && countdownText" style="text-align: center; margin-bottom: 20px; padding: 15px; background: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px;">
             <span style="color: #faad14; font-size: 14px; margin-right: 10px;">⏳ 距离结束还剩：</span>
             <span :style="{ color: countdownColor, fontSize: '20px', fontWeight: 'bold' }">{{ countdownText }}</span>
           </div>
@@ -242,17 +242,20 @@ const loadBidList = () => {
   const user = JSON.parse(localStorage.getItem('user'));
   request.get(`/bid/list/${goodsId}`).then(res => {
     if (res.code === '200') {
-      // 1. 更新出价列表
       const data = res.data;
-      bidList.value = (data.bids || []).map(bid => ({
+      // 兼容处理：如果后端直接返回数组（旧逻辑），则 bids 为空；如果返回对象，则取 data.bids
+      const bidsArray = Array.isArray(data) ? data : (data.bids || []);
+
+      bidList.value = bidsArray.map(bid => ({
         ...bid,
         isMe: bid.userAccount === user.account
       }));
 
-      // 2. 【核心修改】直接根据后端返回的 myBidderCode 更新状态
-      if (data.myBidderCode) {
+      // 获取竞拍号
+      const code = data.myBidderCode; // 如果后端没改 Map 返回，这里会是 undefined
+      if (code) {
         hasPaidDeposit.value = true;
-        myBidderCode.value = data.myBidderCode;
+        myBidderCode.value = code;
       } else {
         // 如果后端说没号，那就重置为未缴纳状态
         hasPaidDeposit.value = false;

@@ -83,14 +83,7 @@ public class BidController {
 
         List<Bid> allBids = bidService.getBidList(goodsId);
 
-        // 核心逻辑：如果是密封式拍卖且尚未结束，隐藏所有出价信息
-        //结束后可以显示出价信息
-        if (goods.getAuctionType() == 3 && goods.getStatus() == 1) {
-            // 方案 A：直接返回空列表，让用户以为没人出价
-            return Result.success(Collections.emptyList());
-        }
-
-        // 【新增】获取当前登录用户，并查找其在该商品下的竞拍号
+        // 【核心修复】获取当前用户的竞拍号（无论什么拍卖类型都要执行）
         String userHeader = request.getHeader("X-User-Info");
         String myCode = null;
         if (userHeader != null) {
@@ -103,10 +96,18 @@ public class BidController {
 
         // 【核心】返回一个包含列表和当前用户竞拍号的复合对象
         Map<String, Object> resultData = new HashMap<>();
-        resultData.put("bids", allBids.stream()
-                .filter(bid -> bid.getPrice().compareTo(BigDecimal.ZERO) > 0) // 过滤掉保证金占位记录
-                .collect(Collectors.toList()));
-        resultData.put("myBidderCode", myCode); // 如果没有号，这里就是 null
+        resultData.put("myBidderCode", myCode);
+
+        // 核心逻辑：如果是密封式拍卖且尚未结束，隐藏所有出价信息（但依然要返回 myBidderCode）
+        if (goods.getAuctionType() == 3 && goods.getStatus() == 1) {
+            resultData.put("bids", Collections.emptyList());
+        } else {
+            // 英式、荷兰式或已结束的密封式，正常返回并过滤掉价格为0的记录
+            List<Bid> validBids = allBids.stream()
+                    .filter(bid -> bid.getPrice().compareTo(java.math.BigDecimal.ZERO) > 0)
+                    .collect(java.util.stream.Collectors.toList());
+            resultData.put("bids", validBids);
+        }
 
         return Result.success(resultData);
     }

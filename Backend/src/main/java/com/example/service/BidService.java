@@ -105,6 +105,18 @@ public class BidService {
                 updateGoods.setId(goods.getId());
                 updateGoods.setStatus(2); // 已成交
                 goodsMapper.update(updateGoods);
+
+                //进行消息推送
+                // 1. 通知卖家
+                messageService.sendMessage(goods.getUserAccount(), "商品售出通知",
+                        String.format("您的商品 [%s] 已被用户 [%s] 以 ¥%s 拍下。", goods.getName(), bid.getUserAccount(), bid.getPrice()),
+                        2, goods.getId());
+
+                // 2. 通知买家
+                messageService.sendMessage(bid.getUserAccount(), "竞拍成功通知",
+                        String.format("恭喜！您已成功拍得 [%s]，请前往【我的订单】支付。", goods.getName()),
+                        2, goods.getId());
+
             } catch (Exception e) {
                 throw new CustomException("500", "订单生成失败: " + e.getMessage());
             }
